@@ -65,7 +65,10 @@ class HomeActivity : AppCompatActivity() {
                 }
                 R.id.nav_reporte -> {
 
-                    Toast.makeText(this, "Ir a Reportes", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this, ReportActivity::class.java).apply {
+                        putExtra("USER_ID", userId)
+                    }
+                    startActivity(intent)
                     true
                 }
                 R.id.nav_gestionar -> {
