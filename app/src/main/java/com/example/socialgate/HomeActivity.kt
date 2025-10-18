@@ -73,7 +73,10 @@ class HomeActivity : AppCompatActivity() {
                 }
                 R.id.nav_gestionar -> {
 
-                    Toast.makeText(this, "Ir a Gestionar", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this, ManageActivity::class.java).apply {
+                        putExtra("USER_ID", userId)
+                    }
+                    startActivity(intent)
                     true
                 }
                 else -> false

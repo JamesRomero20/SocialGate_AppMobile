@@ -35,8 +35,8 @@ class SocialDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
         const val KEY_DESCRIPCION = "descripcion"
         const val KEY_ID_CONTROL = "id_control_pk"
         const val KEY_RED_SOCIAL_CONTROL = "red_social"
-        const val KEY_TIEMPO_LIMITE = "tiempo_limite" // en minutos
-        const val KEY_TIEMPO_USADO = "tiempo_usado" // en minutos
+        const val KEY_TIEMPO_LIMITE = "tiempo_limite"
+        const val KEY_TIEMPO_USADO = "tiempo_usado"
         const val KEY_ESTADO_ALERTA = "estado_alerta"
         const val KEY_ID_REPORTE = "id_reporte_pk"
         const val KEY_FECHA_GENERACION = "fecha_generacion"

@@ -12,14 +12,17 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SocialGate">
         <activity
+            android:name=".ManageActivity"
+            android:exported="false" />
+        <activity
             android:name=".ReportActivity"
             android:exported="false" />
 
         <uses-permission
             android:name="android.permission.PACKAGE_USAGE_STATS"
             tools:ignore="ProtectedPermissions" />
-
-        <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        <uses-permission
+            android:name="android.permission.WRITE_EXTERNAL_STORAGE"
             android:maxSdkVersion="28" />
 
         <activity
