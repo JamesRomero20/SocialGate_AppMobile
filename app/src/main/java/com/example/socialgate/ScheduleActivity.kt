@@ -1,0 +1,279 @@
+package com.example.socialgate
+
+import android.content.ContentValues
+import android.os.Bundle
+import android.widget.Button
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.slider.Slider
+import com.google.android.material.switchmaterial.SwitchMaterial
+import android.app.TimePickerDialog
+import android.view.LayoutInflater
+import androidx.appcompat.app.AlertDialog
+import java.util.Calendar
+import androidx.core.content.ContextCompat
+
+class ScheduleActivity : AppCompatActivity() {
+
+    private lateinit var dbHelper: SocialDatabaseHelper
+    private var userId: Int = -1
+
+    private lateinit var tvTiempoSeleccionado: TextView
+    private lateinit var sliderTiempo: Slider
+
+    private val selectedDays = mutableSetOf<String>()
+
+    private lateinit var dayTextViews: Map<String, TextView>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_schedule)
+
+        setupDaySelection()
+        loadCurrentSchedule()
+        dbHelper = SocialDatabaseHelper(this)
+        userId = intent.getIntExtra("USER_ID", -1)
+
+        if (userId == -1) {
+            Toast.makeText(this, "Error de usuario. Intente de nuevo.", Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
+        val btnEditarHorario = findViewById<Button>(R.id.btnEditarHorario)
+        btnEditarHorario.setOnClickListener {
+            showEditScheduleDialog()
+        }
+
+        setupTimeLimitViews()
+        loadCurrentTimeLimit()
+    }
+
+    private fun setupDaySelection() {
+        dayTextViews = mapOf(
+            "Lunes" to findViewById(R.id.dayLunes),
+            "Martes" to findViewById(R.id.dayMartes),
+            "Miércoles" to findViewById(R.id.dayMiercoles),
+            "Jueves" to findViewById(R.id.dayJueves),
+            "Viernes" to findViewById(R.id.dayViernes),
+            "Sábado" to findViewById(R.id.daySabado),
+            "Domingo" to findViewById(R.id.dayDomingo)
+        )
+
+        dayTextViews.forEach { (dayName, textView) ->
+            textView.setOnClickListener {
+                toggleDaySelection(dayName, textView)
+            }
+        }
+    }
+
+    private fun toggleDaySelection(dayName: String, textView: TextView) {
+        if (selectedDays.contains(dayName)) {
+            selectedDays.remove(dayName)
+            updateDayView(textView, false)
+        } else {
+            selectedDays.add(dayName)
+            updateDayView(textView, true)
+        }
+    }
+    private fun updateDayView(textView: TextView, isSelected: Boolean) {
+        if (isSelected) {
+            textView.background = ContextCompat.getDrawable(this, R.drawable.day_circle_selected)
+            textView.setTextColor(ContextCompat.getColor(this, android.R.color.white))
+        } else {
+            textView.background = ContextCompat.getDrawable(this, R.drawable.day_circle_unselected)
+            textView.setTextColor(ContextCompat.getColor(this, android.R.color.darker_gray))
+        }
+    }
+    private fun saveScheduleToDatabase(startTime: String, endTime: String) {
+
+        if (selectedDays.isEmpty()) {
+            Toast.makeText(this, "Por favor, seleccione al menos un día", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val db = dbHelper.writableDatabase
+
+        db.delete(
+            SocialDatabaseHelper.TABLE_HORARIO_BLOQUEO,
+            "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ?",
+            arrayOf(userId.toString())
+        )
+
+        for (dia in selectedDays) {
+            val values = ContentValues().apply {
+                put(SocialDatabaseHelper.KEY_ID_USUARIO_FK, userId)
+                put(SocialDatabaseHelper.KEY_DIA_SEMANA, dia)
+                put(SocialDatabaseHelper.KEY_HORA_INICIO, startTime)
+                put(SocialDatabaseHelper.KEY_HORA_FIN, endTime)
+                put(SocialDatabaseHelper.KEY_HORARIO_ACTIVO, 1)
+            }
+            db.insert(SocialDatabaseHelper.TABLE_HORARIO_BLOQUEO, null, values)
+        }
+
+        db.close()
+        Toast.makeText(this, "Horario guardado correctamente", Toast.LENGTH_SHORT).show()
+        findViewById<TextView>(R.id.tvHorario).text = "$startTime - $endTime"
+    }
+
+    private fun loadCurrentSchedule() {
+        val db = dbHelper.readableDatabase
+        val cursor = db.query(
+            SocialDatabaseHelper.TABLE_HORARIO_BLOQUEO,
+            arrayOf(SocialDatabaseHelper.KEY_HORA_INICIO, SocialDatabaseHelper.KEY_HORA_FIN, SocialDatabaseHelper.KEY_DIA_SEMANA),
+            "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ?",
+            arrayOf(userId.toString()),
+            null, null, null
+        )
+
+        selectedDays.clear()
+        var startTime = ""
+        var endTime = ""
+
+        while (cursor.moveToNext()) {
+            if (startTime.isEmpty()) {
+                startTime = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_HORA_INICIO))
+                endTime = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_HORA_FIN))
+            }
+            val dia = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_DIA_SEMANA))
+            selectedDays.add(dia)
+        }
+        cursor.close()
+        db.close()
+
+        if (startTime.isNotEmpty()) {
+            findViewById<TextView>(R.id.tvHorario).text = "$startTime - $endTime"
+        }
+
+        dayTextViews.forEach { (dayName, textView) ->
+            updateDayView(textView, selectedDays.contains(dayName))
+        }
+    }
+
+    private fun showEditScheduleDialog() {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_edit_schedule, null)
+        val tvStartTime = dialogView.findViewById<TextView>(R.id.tvStartTime)
+        val tvEndTime = dialogView.findViewById<TextView>(R.id.tvEndTime)
+
+        var selectedStartHour = -1
+        var selectedStartMinute = -1
+        var selectedEndHour = -1
+        var selectedEndMinute = -1
+
+        tvStartTime.setOnClickListener {
+            val calendar = Calendar.getInstance()
+            val timePickerDialog = TimePickerDialog(this, { _, hourOfDay, minute ->
+                selectedStartHour = hourOfDay
+                selectedStartMinute = minute
+                tvStartTime.text = String.format("%02d:%02d", hourOfDay, minute)
+            }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true)
+            timePickerDialog.show()
+        }
+
+        tvEndTime.setOnClickListener {
+            val calendar = Calendar.getInstance()
+            val timePickerDialog = TimePickerDialog(this, { _, hourOfDay, minute ->
+                selectedEndHour = hourOfDay
+                selectedEndMinute = minute
+                tvEndTime.text = String.format("%02d:%02d", hourOfDay, minute)
+            }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true)
+            timePickerDialog.show()
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Configurar Horario de Bloqueo")
+            .setView(dialogView)
+            .setPositiveButton("Guardar") { _, _ ->
+                if (selectedStartHour != -1 && selectedEndHour != -1) {
+                    val startTime = String.format("%02d:%02d", selectedStartHour, selectedStartMinute)
+                    val endTime = String.format("%02d:%02d", selectedEndHour, selectedEndMinute)
+                    saveScheduleToDatabase(startTime, endTime)
+                } else {
+                    Toast.makeText(this, "Por favor, seleccione una hora de inicio y fin", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+    private fun setupTimeLimitViews() {
+        tvTiempoSeleccionado = findViewById(R.id.tvTiempoSeleccionado)
+        sliderTiempo = findViewById(R.id.sliderTiempo)
+
+        sliderTiempo.addOnChangeListener { _, value, _ ->
+            val horas = value.toInt()
+            val minutos = ((value - horas) * 60).toInt()
+            if (minutos == 0) {
+                tvTiempoSeleccionado.text = "$horas horas"
+            } else {
+                tvTiempoSeleccionado.text = "$horas horas y $minutos minutos"
+            }
+        }
+
+        sliderTiempo.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
+            override fun onStartTrackingTouch(slider: Slider) {}
+
+            override fun onStopTrackingTouch(slider: Slider) {
+
+                saveTimeLimitToDatabase(slider.value)
+            }
+        })
+    }
+
+    private fun saveTimeLimitToDatabase(hours: Float) {
+        val limitInMinutes = (hours * 60).toInt()
+        val db = dbHelper.writableDatabase
+
+        val values = ContentValues().apply {
+            put(SocialDatabaseHelper.KEY_TIEMPO_LIMITE, limitInMinutes)
+        }
+
+        val rowsAffected = db.update(
+            SocialDatabaseHelper.TABLE_CONTROL_TIEMPO,
+            values,
+            "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ?",
+            arrayOf(userId.toString())
+        )
+
+        if (rowsAffected == 0) {
+            val valuesFb = ContentValues().apply {
+                put(SocialDatabaseHelper.KEY_ID_USUARIO_FK, userId)
+                put(SocialDatabaseHelper.KEY_RED_SOCIAL_CONTROL, "Facebook")
+                put(SocialDatabaseHelper.KEY_TIEMPO_LIMITE, limitInMinutes)
+                put(SocialDatabaseHelper.KEY_TIEMPO_USADO, 0)
+                put(SocialDatabaseHelper.KEY_ESTADO_ALERTA, "OK")
+            }
+            db.insert(SocialDatabaseHelper.TABLE_CONTROL_TIEMPO, null, valuesFb)
+
+            val valuesIg = ContentValues().apply {
+                put(SocialDatabaseHelper.KEY_ID_USUARIO_FK, userId)
+                put(SocialDatabaseHelper.KEY_RED_SOCIAL_CONTROL, "Instagram")
+                put(SocialDatabaseHelper.KEY_TIEMPO_LIMITE, limitInMinutes)
+                put(SocialDatabaseHelper.KEY_TIEMPO_USADO, 0)
+                put(SocialDatabaseHelper.KEY_ESTADO_ALERTA, "OK")
+            }
+            db.insert(SocialDatabaseHelper.TABLE_CONTROL_TIEMPO, null, valuesIg)
+        }
+
+        Toast.makeText(this, "Límite de tiempo guardado", Toast.LENGTH_SHORT).show()
+        db.close()
+    }
+
+    private fun loadCurrentTimeLimit() {
+        val db = dbHelper.readableDatabase
+        val cursor = db.query(
+            SocialDatabaseHelper.TABLE_CONTROL_TIEMPO,
+            arrayOf(SocialDatabaseHelper.KEY_TIEMPO_LIMITE),
+            "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ?",
+            arrayOf(userId.toString()),
+            null, null, null, "1"
+        )
+
+        if (cursor.moveToFirst()) {
+            val limitInMinutes = cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_TIEMPO_LIMITE))
+            val hours = limitInMinutes / 60f
+            sliderTiempo.value = hours
+        }
+        cursor.close()
+        db.close()
+    }
+}
