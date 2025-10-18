@@ -117,8 +117,8 @@ class SocialDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
         db?.execSQL("DROP TABLE IF EXISTS " + TABLE_REPORTE)
         db?.execSQL("DROP TABLE IF EXISTS " + TABLE_CONTROL_TIEMPO)
         db?.execSQL("DROP TABLE IF EXISTS " + TABLE_ACTIVIDAD)
-        db?.execSQL("DROP TABLE IF EXISTS " + TABLE_USUARIO)
         db?.execSQL("DROP TABLE IF EXISTS " + TABLE_HORARIO_BLOQUEO)
+        db?.execSQL("DROP TABLE IF EXISTS " + TABLE_USUARIO)
 
         onCreate(db)
     }

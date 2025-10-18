@@ -14,7 +14,6 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: SocialDatabaseHelper
     private var userId: Int = -1
-
     private lateinit var tvNombre: TextView
     private lateinit var tvTiempoHoy: TextView
     private lateinit var tvLimite: TextView
@@ -167,7 +166,6 @@ class HomeActivity : AppCompatActivity() {
         tvTiempoHoy.text = formatMinutesToHours(totalTimeUsed)
         tvLimite.text = "Límite establecido: ${formatMinutesToHours(timeLimit, showUnit = true)}"
     }
-
 
     private fun formatMinutesToHours(minutes: Int, showUnit: Boolean = true): String {
         val hours = minutes / 60.0

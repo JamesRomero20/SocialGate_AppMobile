@@ -176,11 +176,11 @@
                         android:gravity="center"
                         android:layout_marginTop="20dp">
 
-                        <TextView android:id="@+id/dayLunes" android:text="L" style="@style/DayOfWeek.Selected"/>
-                        <TextView android:id="@+id/dayMartes" android:text="M" style="@style/DayOfWeek.Selected" android:layout_marginStart="8dp"/>
-                        <TextView android:id="@+id/dayMiercoles" android:text="M" style="@style/DayOfWeek.Selected" android:layout_marginStart="8dp"/>
-                        <TextView android:id="@+id/dayJueves" android:text="J" style="@style/DayOfWeek.Selected" android:layout_marginStart="8dp"/>
-                        <TextView android:id="@+id/dayViernes" android:text="V" style="@style/DayOfWeek.Selected" android:layout_marginStart="8dp"/>
+                        <TextView android:id="@+id/dayLunes" android:text="L" style="@style/DayOfWeek.Unselected"/>
+                        <TextView android:id="@+id/dayMartes" android:text="M" style="@style/DayOfWeek.Unselected" android:layout_marginStart="8dp"/>
+                        <TextView android:id="@+id/dayMiercoles" android:text="M" style="@style/DayOfWeek.Unselected" android:layout_marginStart="8dp"/>
+                        <TextView android:id="@+id/dayJueves" android:text="J" style="@style/DayOfWeek.Unselected" android:layout_marginStart="8dp"/>
+                        <TextView android:id="@+id/dayViernes" android:text="V" style="@style/DayOfWeek.Unselected" android:layout_marginStart="8dp"/>
                         <TextView android:id="@+id/daySabado" android:text="S" style="@style/DayOfWeek.Unselected" android:layout_marginStart="8dp"/>
                         <TextView android:id="@+id/dayDomingo" android:text="D" style="@style/DayOfWeek.Unselected" android:layout_marginStart="8dp"/>
                     </LinearLayout>
@@ -191,7 +191,7 @@
                         android:layout_height="48dp"
                         android:layout_gravity="center_horizontal"
                         android:layout_marginTop="20dp"
-                        android:backgroundTint="#FF5722"
+                        android:backgroundTint="#1877F2"
                         android:paddingHorizontal="32dp"
                         android:text="Editar"
                         android:textAllCaps="false"
@@ -214,6 +214,9 @@
         app:labelVisibilityMode="labeled"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+
+        app:itemIconTint="@color/bottom_nav_color_selector"
+        app:itemTextColor="@color/bottom_nav_color_selector" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
