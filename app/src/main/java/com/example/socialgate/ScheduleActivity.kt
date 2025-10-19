@@ -7,10 +7,15 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.slider.Slider
-import com.google.android.material.switchmaterial.SwitchMaterial
 import android.app.TimePickerDialog
 import android.view.LayoutInflater
 import androidx.appcompat.app.AlertDialog
+import android.content.Intent
+import android.database.Cursor
+import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteException
+import android.util.Log
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.util.Calendar
 import androidx.core.content.ContextCompat
 
@@ -18,38 +23,44 @@ class ScheduleActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: SocialDatabaseHelper
     private var userId: Int = -1
-
-    private lateinit var tvTiempoSeleccionado: TextView
-    private lateinit var sliderTiempo: Slider
-
+    private var tvTiempoSeleccionado: TextView? = null
+    private var sliderTiempo: Slider? = null
+    private var dayTextViews: Map<String, TextView>? = null
     private val selectedDays = mutableSetOf<String>()
-
-    private lateinit var dayTextViews: Map<String, TextView>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_schedule)
+        try {
 
-        setupDaySelection()
-        loadCurrentSchedule()
-        dbHelper = SocialDatabaseHelper(this)
-        userId = intent.getIntExtra("USER_ID", -1)
+            dbHelper = SocialDatabaseHelper(this)
+            userId = intent.getIntExtra("USER_ID", -1)
 
-        if (userId == -1) {
-            Toast.makeText(this, "Error de usuario. Intente de nuevo.", Toast.LENGTH_LONG).show()
+            if (userId == -1) {
+                Toast.makeText(this, "Error de usuario. Intente de nuevo.", Toast.LENGTH_LONG)
+                    .show()
+                finish()
+                return
+            }
+
+            setupViews()
+
+            setupListeners()
+
+            setupBottomNavigation()
+
+            loadCurrentTimeLimit()
+
+            loadCurrentSchedule()
+        }catch (e: Exception) {
+            Log.e("ScheduleActivity", "Error crítico en la inicialización de ScheduleActivity", e)
+            Toast.makeText(this, "Error al cargar la pantalla de horario.", Toast.LENGTH_LONG).show()
             finish()
-            return
         }
-        val btnEditarHorario = findViewById<Button>(R.id.btnEditarHorario)
-        btnEditarHorario.setOnClickListener {
-            showEditScheduleDialog()
-        }
-
-        setupTimeLimitViews()
-        loadCurrentTimeLimit()
     }
-
-    private fun setupDaySelection() {
+    private fun setupViews() {
+        tvTiempoSeleccionado = findViewById(R.id.tvTiempoSeleccionado)
+        sliderTiempo = findViewById(R.id.sliderTiempo)
         dayTextViews = mapOf(
             "Lunes" to findViewById(R.id.dayLunes),
             "Martes" to findViewById(R.id.dayMartes),
@@ -59,11 +70,51 @@ class ScheduleActivity : AppCompatActivity() {
             "Sábado" to findViewById(R.id.daySabado),
             "Domingo" to findViewById(R.id.dayDomingo)
         )
+    }
 
-        dayTextViews.forEach { (dayName, textView) ->
+    private fun setupListeners() {
+        findViewById<Button>(R.id.btnEditarHorario).setOnClickListener {
+            showEditScheduleDialog()
+        }
+
+        sliderTiempo?.addOnChangeListener { _, value, _ ->
+            val horas = value.toInt()
+            val minutos = ((value - horas) * 60).toInt()
+            tvTiempoSeleccionado?.text = if (minutos == 0) "$horas horas" else "$horas horas y $minutos minutos"
+        }
+
+        sliderTiempo?.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
+            override fun onStartTrackingTouch(slider: Slider) {}
+            override fun onStopTrackingTouch(slider: Slider) {
+                saveTimeLimitToDatabase(slider.value)
+            }
+        })
+
+        dayTextViews?.forEach { (dayName, textView) ->
             textView.setOnClickListener {
                 toggleDaySelection(dayName, textView)
             }
+        }
+    }
+
+    private fun setupBottomNavigation() {
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNav.selectedItemId = R.id.nav_horario
+
+        bottomNav.setOnItemSelectedListener { item ->
+            if (item.itemId == bottomNav.selectedItemId) return@setOnItemSelectedListener true
+            val intent = when (item.itemId) {
+                R.id.nav_inicio -> Intent(this, HomeActivity::class.java)
+                R.id.nav_reporte -> Intent(this, ReportActivity::class.java)
+                R.id.nav_gestionar -> Intent(this, ManageActivity::class.java)
+                else -> null
+            }
+            intent?.apply {
+                putExtra("USER_ID", userId)
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            startActivity(intent)
+            true
         }
     }
 
@@ -91,63 +142,80 @@ class ScheduleActivity : AppCompatActivity() {
             Toast.makeText(this, "Por favor, seleccione al menos un día", Toast.LENGTH_SHORT).show()
             return
         }
+        var db: SQLiteDatabase? = null
+        try {
+            db = dbHelper.writableDatabase
+            db.delete(
+                SocialDatabaseHelper.TABLE_HORARIO_BLOQUEO,
+                "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ?",
+                arrayOf(userId.toString())
+            )
 
-        val db = dbHelper.writableDatabase
-
-        db.delete(
-            SocialDatabaseHelper.TABLE_HORARIO_BLOQUEO,
-            "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ?",
-            arrayOf(userId.toString())
-        )
-
-        for (dia in selectedDays) {
-            val values = ContentValues().apply {
-                put(SocialDatabaseHelper.KEY_ID_USUARIO_FK, userId)
-                put(SocialDatabaseHelper.KEY_DIA_SEMANA, dia)
-                put(SocialDatabaseHelper.KEY_HORA_INICIO, startTime)
-                put(SocialDatabaseHelper.KEY_HORA_FIN, endTime)
-                put(SocialDatabaseHelper.KEY_HORARIO_ACTIVO, 1)
+            for (dia in selectedDays) {
+                val values = ContentValues().apply {
+                    put(SocialDatabaseHelper.KEY_ID_USUARIO_FK, userId)
+                    put(SocialDatabaseHelper.KEY_DIA_SEMANA, dia)
+                    put(SocialDatabaseHelper.KEY_HORA_INICIO, startTime)
+                    put(SocialDatabaseHelper.KEY_HORA_FIN, endTime)
+                    put(SocialDatabaseHelper.KEY_HORARIO_ACTIVO, 1)
+                }
+                db.insert(SocialDatabaseHelper.TABLE_HORARIO_BLOQUEO, null, values)
             }
-            db.insert(SocialDatabaseHelper.TABLE_HORARIO_BLOQUEO, null, values)
+            Toast.makeText(this, "Horario guardado correctamente", Toast.LENGTH_SHORT).show()
+            findViewById<TextView>(R.id.tvHorario).text = "$startTime - $endTime"
+        } catch (e: SQLiteException) {
+            Log.e("ScheduleActivity", "Error de BD al guardar horario", e)
+            Toast.makeText(this, "Error al guardar el horario.", Toast.LENGTH_SHORT).show()
+        } finally {
+            db?.close()
         }
-
-        db.close()
-        Toast.makeText(this, "Horario guardado correctamente", Toast.LENGTH_SHORT).show()
-        findViewById<TextView>(R.id.tvHorario).text = "$startTime - $endTime"
     }
 
     private fun loadCurrentSchedule() {
-        val db = dbHelper.readableDatabase
-        val cursor = db.query(
-            SocialDatabaseHelper.TABLE_HORARIO_BLOQUEO,
-            arrayOf(SocialDatabaseHelper.KEY_HORA_INICIO, SocialDatabaseHelper.KEY_HORA_FIN, SocialDatabaseHelper.KEY_DIA_SEMANA),
-            "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ?",
-            arrayOf(userId.toString()),
-            null, null, null
-        )
+        var db: SQLiteDatabase? = null
+        var cursor: Cursor? = null
+        try {
+            db = dbHelper.readableDatabase
+            cursor = db.query(
+                SocialDatabaseHelper.TABLE_HORARIO_BLOQUEO,
+                arrayOf(
+                    SocialDatabaseHelper.KEY_HORA_INICIO,
+                    SocialDatabaseHelper.KEY_HORA_FIN,
+                    SocialDatabaseHelper.KEY_DIA_SEMANA
+                ),
+                "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ?",
+                arrayOf(userId.toString()),
+                null, null, null
+            )
+            selectedDays.clear()
+            var startTime = ""
+            var endTime = ""
 
-        selectedDays.clear()
-        var startTime = ""
-        var endTime = ""
-
-        while (cursor.moveToNext()) {
-            if (startTime.isEmpty()) {
-                startTime = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_HORA_INICIO))
-                endTime = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_HORA_FIN))
+            while (cursor.moveToNext()) {
+                if (startTime.isEmpty()) {
+                    startTime = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_HORA_INICIO))
+                    endTime = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_HORA_FIN))
+                }
+                val dia = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_DIA_SEMANA))
+                selectedDays.add(dia)
             }
-            val dia = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_DIA_SEMANA))
-            selectedDays.add(dia)
-        }
-        cursor.close()
-        db.close()
 
-        if (startTime.isNotEmpty()) {
-            findViewById<TextView>(R.id.tvHorario).text = "$startTime - $endTime"
+            if (startTime.isNotEmpty()) {
+                findViewById<TextView>(R.id.tvHorario).text = "$startTime - $endTime"
+            }
+
+            dayTextViews?.forEach { (dayName, textView) ->
+                updateDayView(textView, selectedDays.contains(dayName))
+            }
+
+        } catch (e: Exception) {
+            Log.e("ScheduleActivity", "Error inesperado al cargar horario", e)
+            Toast.makeText(this, "Ocurrió un error inesperado.", Toast.LENGTH_SHORT).show()
+        } finally {
+            cursor?.close()
+            db?.close()
         }
 
-        dayTextViews.forEach { (dayName, textView) ->
-            updateDayView(textView, selectedDays.contains(dayName))
-        }
     }
 
     private fun showEditScheduleDialog() {
@@ -195,85 +263,75 @@ class ScheduleActivity : AppCompatActivity() {
             .setNegativeButton("Cancelar", null)
             .show()
     }
-    private fun setupTimeLimitViews() {
-        tvTiempoSeleccionado = findViewById(R.id.tvTiempoSeleccionado)
-        sliderTiempo = findViewById(R.id.sliderTiempo)
-
-        sliderTiempo.addOnChangeListener { _, value, _ ->
-            val horas = value.toInt()
-            val minutos = ((value - horas) * 60).toInt()
-            if (minutos == 0) {
-                tvTiempoSeleccionado.text = "$horas horas"
-            } else {
-                tvTiempoSeleccionado.text = "$horas horas y $minutos minutos"
-            }
-        }
-
-        sliderTiempo.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
-            override fun onStartTrackingTouch(slider: Slider) {}
-
-            override fun onStopTrackingTouch(slider: Slider) {
-
-                saveTimeLimitToDatabase(slider.value)
-            }
-        })
-    }
 
     private fun saveTimeLimitToDatabase(hours: Float) {
         val limitInMinutes = (hours * 60).toInt()
-        val db = dbHelper.writableDatabase
-
-        val values = ContentValues().apply {
-            put(SocialDatabaseHelper.KEY_TIEMPO_LIMITE, limitInMinutes)
-        }
-
-        val rowsAffected = db.update(
-            SocialDatabaseHelper.TABLE_CONTROL_TIEMPO,
-            values,
-            "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ?",
-            arrayOf(userId.toString())
-        )
-
-        if (rowsAffected == 0) {
-            val valuesFb = ContentValues().apply {
-                put(SocialDatabaseHelper.KEY_ID_USUARIO_FK, userId)
-                put(SocialDatabaseHelper.KEY_RED_SOCIAL_CONTROL, "Facebook")
+        var db: SQLiteDatabase? = null
+        try {
+            db = dbHelper.writableDatabase
+            val values = ContentValues().apply {
                 put(SocialDatabaseHelper.KEY_TIEMPO_LIMITE, limitInMinutes)
-                put(SocialDatabaseHelper.KEY_TIEMPO_USADO, 0)
-                put(SocialDatabaseHelper.KEY_ESTADO_ALERTA, "OK")
             }
-            db.insert(SocialDatabaseHelper.TABLE_CONTROL_TIEMPO, null, valuesFb)
 
-            val valuesIg = ContentValues().apply {
-                put(SocialDatabaseHelper.KEY_ID_USUARIO_FK, userId)
-                put(SocialDatabaseHelper.KEY_RED_SOCIAL_CONTROL, "Instagram")
-                put(SocialDatabaseHelper.KEY_TIEMPO_LIMITE, limitInMinutes)
-                put(SocialDatabaseHelper.KEY_TIEMPO_USADO, 0)
-                put(SocialDatabaseHelper.KEY_ESTADO_ALERTA, "OK")
+            val rowsAffected = db.update(
+                SocialDatabaseHelper.TABLE_CONTROL_TIEMPO,
+                values,
+                "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ?",
+                arrayOf(userId.toString())
+            )
+
+            if (rowsAffected == 0) {
+                val valuesFb = ContentValues().apply {
+                    put(SocialDatabaseHelper.KEY_ID_USUARIO_FK, userId)
+                    put(SocialDatabaseHelper.KEY_RED_SOCIAL_CONTROL, "Facebook")
+                    put(SocialDatabaseHelper.KEY_TIEMPO_LIMITE, limitInMinutes)
+                    put(SocialDatabaseHelper.KEY_TIEMPO_USADO, 0)
+                    put(SocialDatabaseHelper.KEY_ESTADO_ALERTA, "OK")
+                }
+                db.insert(SocialDatabaseHelper.TABLE_CONTROL_TIEMPO, null, valuesFb)
+
+                val valuesIg = ContentValues().apply {
+                    put(SocialDatabaseHelper.KEY_ID_USUARIO_FK, userId)
+                    put(SocialDatabaseHelper.KEY_RED_SOCIAL_CONTROL, "Instagram")
+                    put(SocialDatabaseHelper.KEY_TIEMPO_LIMITE, limitInMinutes)
+                    put(SocialDatabaseHelper.KEY_TIEMPO_USADO, 0)
+                    put(SocialDatabaseHelper.KEY_ESTADO_ALERTA, "OK")
+                }
+                db.insert(SocialDatabaseHelper.TABLE_CONTROL_TIEMPO, null, valuesIg)
             }
-            db.insert(SocialDatabaseHelper.TABLE_CONTROL_TIEMPO, null, valuesIg)
+            Toast.makeText(this, "Límite de tiempo guardado", Toast.LENGTH_SHORT).show()
+        } catch (e: SQLiteException) {
+            Log.e("ScheduleActivity", "Error de BD al guardar límite de tiempo", e)
+            Toast.makeText(this, "Error al guardar el límite de tiempo.", Toast.LENGTH_SHORT).show()
+        } finally {
+            db?.close()
         }
-
-        Toast.makeText(this, "Límite de tiempo guardado", Toast.LENGTH_SHORT).show()
-        db.close()
     }
-
     private fun loadCurrentTimeLimit() {
-        val db = dbHelper.readableDatabase
-        val cursor = db.query(
-            SocialDatabaseHelper.TABLE_CONTROL_TIEMPO,
-            arrayOf(SocialDatabaseHelper.KEY_TIEMPO_LIMITE),
-            "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ?",
-            arrayOf(userId.toString()),
-            null, null, null, "1"
-        )
+        var db: SQLiteDatabase? = null
+        var cursor: Cursor? = null
+        try {
+            db = dbHelper.readableDatabase
+            cursor = db.query(
+                SocialDatabaseHelper.TABLE_CONTROL_TIEMPO,
+                arrayOf(SocialDatabaseHelper.KEY_TIEMPO_LIMITE),
+                "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ?",
+                arrayOf(userId.toString()),
+                null, null, null, "1"
+            )
 
-        if (cursor.moveToFirst()) {
-            val limitInMinutes = cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_TIEMPO_LIMITE))
-            val hours = limitInMinutes / 60f
-            sliderTiempo.value = hours
+            if (cursor.moveToFirst()) {
+                val limitInMinutes =
+                    cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_TIEMPO_LIMITE))
+                val hours = limitInMinutes / 60f
+                sliderTiempo?.value = hours
+            }
+        } catch (e: SQLiteException) {
+            Log.e("ScheduleActivity", "Error de BD al cargar límite de tiempo", e)
+            Toast.makeText(this, "No se pudo cargar el límite de tiempo.", Toast.LENGTH_SHORT).show()
+        } finally {
+            cursor?.close()
+            db?.close()
         }
-        cursor.close()
-        db.close()
     }
 }

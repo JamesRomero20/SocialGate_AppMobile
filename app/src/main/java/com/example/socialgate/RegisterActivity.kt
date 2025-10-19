@@ -1,6 +1,7 @@
 package com.example.socialgate
 
 import android.content.ContentValues
+import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -14,9 +15,30 @@ class RegisterActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: SocialDatabaseHelper
 
+    private fun userExists(db: SQLiteDatabase, username: String, email: String): Boolean {
+        val query = "SELECT * FROM ${SocialDatabaseHelper.TABLE_USUARIO} WHERE " +
+                "${SocialDatabaseHelper.KEY_USUARIO} = ? OR ${SocialDatabaseHelper.KEY_EMAIL} = ?"
+        val cursor = db.rawQuery(query, arrayOf(username, email))
+
+        if (cursor.moveToFirst()) {
+
+            val existingUsername = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_USUARIO))
+            if (existingUsername.equals(username, ignoreCase = true)) {
+                Toast.makeText(this, "El nombre de usuario ya está en uso.", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "El correo electrónico ya está registrado.", Toast.LENGTH_SHORT).show()
+            }
+            cursor.close()
+            return true
+        }
+
+        cursor.close()
+        return false
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.register)
+        setContentView(R.layout.activity_register)
 
         dbHelper = SocialDatabaseHelper(this)
 
@@ -48,6 +70,12 @@ class RegisterActivity : AppCompatActivity() {
             }
 
             val db = dbHelper.writableDatabase
+
+            if (userExists(db, username, email)) {
+                db.close() // Cierra la base de datos antes de salir
+                return@setOnClickListener
+            }
+
             val values = ContentValues().apply {
                 put(SocialDatabaseHelper.KEY_USUARIO, username)
                 put(SocialDatabaseHelper.KEY_NOMBRE, "$name $subname")
@@ -60,7 +88,6 @@ class RegisterActivity : AppCompatActivity() {
                 put(SocialDatabaseHelper.KEY_FECHA_REGISTRO, currentDate)
             }
 
-
             val newRowId = db.insert(SocialDatabaseHelper.TABLE_USUARIO, null, values)
 
             if (newRowId != -1L) {
@@ -69,6 +96,7 @@ class RegisterActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(this, "Error al registrar el usuario", Toast.LENGTH_LONG).show()
             }
+            db.close()
         }
     }
 }
