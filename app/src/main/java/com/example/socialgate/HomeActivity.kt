@@ -6,11 +6,20 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import android.Manifest
+import android.content.pm.PackageManager
 import android.app.AppOpsManager
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
+import android.os.Build
 import android.os.Process
 import android.provider.Settings
 import android.util.Log
@@ -26,6 +35,15 @@ class HomeActivity : AppCompatActivity() {
     private var tvFacebookTime: TextView? = null
     private var tvInstagramTime: TextView? = null
 
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (isGranted) {
+
+                startMonitoringService()
+            } else {
+                Toast.makeText(this, "El permiso de notificaciones es necesario para las alertas.", Toast.LENGTH_LONG).show()
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,7 +74,7 @@ class HomeActivity : AppCompatActivity() {
             if (!hasUsageStatsPermission()) {
                 requestUsageStatsPermission()
             } else {
-                startMonitoringService()
+                checkNotificationPermissionAndStartService()
             }
         }catch (e: Exception) {
             Log.e("HomeActivity", "Error crítico en la inicialización de HomeActivity", e)
@@ -65,6 +83,31 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    private fun checkNotificationPermissionAndStartService() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED -> {
+
+                    startMonitoringService()
+                }
+                shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
+
+                    Toast.makeText(this, "Las notificaciones son necesarias para recibir alertas de uso.", Toast.LENGTH_LONG).show()
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+                else -> {
+
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        } else {
+
+            startMonitoringService()
+        }
+    }
     private fun setupBottomNavigation() {
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNav.selectedItemId = R.id.nav_inicio
@@ -75,14 +118,20 @@ class HomeActivity : AppCompatActivity() {
             }
 
             val intent = when (item.itemId) {
+                R.id.nav_inicio -> Intent(this, HomeActivity::class.java)
                 R.id.nav_horario -> Intent(this, ScheduleActivity::class.java)
                 R.id.nav_reporte -> Intent(this, ReportActivity::class.java)
                 R.id.nav_gestionar -> Intent(this, ManageActivity::class.java)
                 else -> null
             }
 
-            intent?.apply { putExtra("USER_ID", userId) }
+            intent?.apply {
+                putExtra("USER_ID", userId)
+                flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+            }
+
             startActivity(intent)
+            overridePendingTransition(0, 0)
             true
         }
     }
@@ -90,8 +139,10 @@ class HomeActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         if (userId != -1) {
-            loadUserData()
-            loadUsageData()
+            lifecycleScope.launch {
+                loadUserData()
+                loadUsageData()
+            }
         }
     }
 
@@ -117,71 +168,102 @@ class HomeActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-    private fun loadUserData() {
-        var db: SQLiteDatabase? = null
-        var cursor: Cursor? = null
-        try {
-            db = dbHelper.readableDatabase
-            cursor = db.query(
-                SocialDatabaseHelper.TABLE_USUARIO,
-                arrayOf(SocialDatabaseHelper.KEY_NOMBRE),
-                "${SocialDatabaseHelper.KEY_ID_USUARIO} = ?",
-                arrayOf(userId.toString()), null, null, null
-            )
-            if (cursor != null && cursor.moveToFirst()) {
-                val nombre = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_NOMBRE))
-                tvNombre?.text = nombre
+    private suspend fun loadUserData() {
+
+        withContext(Dispatchers.IO) {
+            var db: SQLiteDatabase? = null
+            var cursor: Cursor? = null
+            try {
+                db = dbHelper.readableDatabase
+
+                cursor = db.query(
+                    SocialDatabaseHelper.TABLE_USUARIO,
+                    arrayOf(SocialDatabaseHelper.KEY_NOMBRE),
+                    "${SocialDatabaseHelper.KEY_ID_USUARIO} = ?",
+                    arrayOf(userId.toString()), null, null, null
+                )
+                if (cursor != null && cursor.moveToFirst()) {
+                    val nombre =
+                        cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_NOMBRE))
+
+                    withContext(Dispatchers.Main) {
+                        tvNombre?.text = nombre
+                    }
+                }
+            } catch (e: SQLiteException) {
+                Log.e("HomeActivity", "Error de base de datos al cargar datos del usuario", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@HomeActivity, "No se pudieron cargar los datos del usuario.", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Log.e("HomeActivity", "Error inesperado al cargar datos del usuario", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@HomeActivity, "Ocurrió un error inesperado.", Toast.LENGTH_SHORT).show()
+                }
+            } finally {
+                cursor?.close()
+                db?.close()
             }
-        } catch (e: SQLiteException) {
-            Log.e("HomeActivity", "Error de base de datos al cargar datos del usuario", e)
-            Toast.makeText(this, "No se pudieron cargar los datos del usuario.", Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            Log.e("HomeActivity", "Error inesperado al cargar datos del usuario", e)
-            Toast.makeText(this, "Ocurrió un error inesperado.", Toast.LENGTH_SHORT).show()
-        } finally {
-            cursor?.close()
-            db?.close()
         }
     }
-    private fun loadUsageData() {
-        var db: SQLiteDatabase? = null
-        var cursor: Cursor? = null
-        try {
-            db = dbHelper.readableDatabase
-            cursor = db.query(
-                SocialDatabaseHelper.TABLE_CONTROL_TIEMPO,
-                null, "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ?",
-                arrayOf(userId.toString()), null, null, null
-            )
+    private suspend fun loadUsageData() {
+        withContext(Dispatchers.IO) {
+            var db: SQLiteDatabase? = null
+            var cursor: Cursor? = null
             var totalTimeUsed = 0
             var timeLimit = 0
+            var facebookTime = 0
+            var instagramTime = 0
+            try {
+                db = dbHelper.readableDatabase
+                cursor = db.query(
+                    SocialDatabaseHelper.TABLE_CONTROL_TIEMPO,
+                    null, "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ?",
+                    arrayOf(userId.toString()), null, null, null
+                )
 
-            tvFacebookTime?.text = formatMinutesToHours(0)
-            tvInstagramTime?.text = formatMinutesToHours(0)
+                if (cursor != null) {
+                    while (cursor.moveToNext()) {
+                        val redSocial =
+                            cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_RED_SOCIAL_CONTROL))
+                        val tiempoUsado =
+                            cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_TIEMPO_USADO))
 
-            while (cursor.moveToNext()) {
-                val redSocial = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_RED_SOCIAL_CONTROL))
-                val tiempoUsado = cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_TIEMPO_USADO))
-                val tiempoLimite = cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_TIEMPO_LIMITE))
-                totalTimeUsed += tiempoUsado
-                timeLimit = tiempoLimite
-                when (redSocial.lowercase()) {
-                    "facebook" -> tvFacebookTime?.text = formatMinutesToHours(tiempoUsado)
-                    "instagram" -> tvInstagramTime?.text = formatMinutesToHours(tiempoUsado)
+                        totalTimeUsed += tiempoUsado
+                        timeLimit =
+                            cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_TIEMPO_LIMITE))
+
+                        when (redSocial.lowercase()) {
+                            "facebook" -> facebookTime = tiempoUsado
+                            "instagram" -> instagramTime = tiempoUsado
+                        }
+                    }
                 }
+            } catch (e: SQLiteException) {
+                Log.e("HomeActivity", "Error de base de datos al cargar tiempo de uso", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@HomeActivity, "No se pudo cargar el tiempo de uso.", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Log.e("HomeActivity", "Error inesperado al cargar tiempo de uso", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@HomeActivity, "Ocurrió un error inesperado.", Toast.LENGTH_SHORT).show()
+                }
+            } finally {
+                cursor?.close()
+                db?.close()
             }
-            tvTiempoHoy?.text = formatMinutesToHours(totalTimeUsed)
-            tvLimite?.text = "Límite: ${formatMinutesToHours(timeLimit, showUnit = true)}"
-        } catch (e: SQLiteException) {
-            Log.e("HomeActivity", "Error de base de datos al cargar tiempo de uso", e)
-            Toast.makeText(this, "No se pudo cargar el tiempo de uso.", Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            Log.e("HomeActivity", "Error inesperado al cargar tiempo de uso", e)
-            Toast.makeText(this, "Ocurrió un error inesperado.", Toast.LENGTH_SHORT).show()
-        } finally {
-            cursor?.close()
-            db?.close()
+
+
+            withContext(Dispatchers.Main) {
+
+                tvFacebookTime?.text = formatMinutesToHours(facebookTime)
+                tvInstagramTime?.text = formatMinutesToHours(instagramTime)
+                tvTiempoHoy?.text = formatMinutesToHours(totalTimeUsed)
+                tvLimite?.text = "Límite: ${formatMinutesToHours(timeLimit, showUnit = true)}"
+            }
         }
+
     }
     private fun formatMinutesToHours(minutes: Int, showUnit: Boolean = true): String {
         val hours = minutes / 60.0

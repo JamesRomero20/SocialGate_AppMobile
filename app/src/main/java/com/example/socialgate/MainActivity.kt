@@ -12,9 +12,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 class MainActivity : AppCompatActivity() {
 
-
-    class MainActivity : AppCompatActivity() {
-
         private lateinit var dbHelper: SocialDatabaseHelper
 
         override fun onCreate(savedInstanceState: Bundle?) {
@@ -100,4 +97,3 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-}

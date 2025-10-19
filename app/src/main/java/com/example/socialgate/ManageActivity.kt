@@ -78,13 +78,15 @@ class ManageActivity : AppCompatActivity() {
                 R.id.nav_inicio -> Intent(this, HomeActivity::class.java)
                 R.id.nav_horario -> Intent(this, ScheduleActivity::class.java)
                 R.id.nav_reporte -> Intent(this, ReportActivity::class.java)
+                R.id.nav_gestionar -> Intent(this, ManageActivity::class.java)
                 else -> null
             }
             intent?.apply {
                 putExtra("USER_ID", userId)
-                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
             }
             startActivity(intent)
+            overridePendingTransition(0, 0)
             true
         }
     }

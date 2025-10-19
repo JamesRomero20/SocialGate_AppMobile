@@ -72,7 +72,7 @@ class RegisterActivity : AppCompatActivity() {
             val db = dbHelper.writableDatabase
 
             if (userExists(db, username, email)) {
-                db.close() // Cierra la base de datos antes de salir
+                db.close()
                 return@setOnClickListener
             }
 

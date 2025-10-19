@@ -2,11 +2,13 @@ package com.example.socialgate
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import androidx.core.app.NotificationManagerCompat
 import android.app.Service
 import android.app.usage.UsageStatsManager
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.os.Build
@@ -15,6 +17,8 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
+import android.Manifest
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -22,7 +26,7 @@ import java.util.Locale
 class AppUsageMonitorService : Service() {
 
     private val handler = Handler(Looper.getMainLooper())
-    private lateinit var runnable: Runnable
+    private var runnable: Runnable? = null
     private var lastTrackedApp: String? = null
     private var startTime: Long = 0
 
@@ -30,6 +34,31 @@ class AppUsageMonitorService : Service() {
 
     private var userId: Int = -1
     private val targetApps = setOf("com.facebook.katana", "com.instagram.android")
+
+    private fun mostrarAlertaDeUso(appName: String) {
+        val channelId = "USAGE_ALERT_CHANNEL"
+        val notificationId = 2
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(channelId, "Alertas de Uso", NotificationManager.IMPORTANCE_HIGH)
+            val manager = getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(channel)
+        }
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.logosocialgate) // Tu ícono
+            .setContentTitle("Alerta de Uso de Red Social")
+            .setContentText("Has comenzado a usar $appName.")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+            NotificationManagerCompat.from(this).notify(notificationId, notification)
+        } else {
+            Log.w("AppMonitor", "No se puede mostrar la alerta: permiso POST_NOTIFICATIONS denegado.")
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -56,7 +85,7 @@ class AppUsageMonitorService : Service() {
             val notification = NotificationCompat.Builder(this, "USAGE_MONITOR_CHANNEL")
                 .setContentTitle("SocialGate")
                 .setContentText("Monitoreando el uso de aplicaciones.")
-                .setSmallIcon(R.drawable.LogoSocialGate)
+                .setSmallIcon(R.drawable.logosocialgate)
                 .build()
 
             startForeground(1, notification)
@@ -82,6 +111,8 @@ class AppUsageMonitorService : Service() {
                         startTime = System.currentTimeMillis()
                         lastTrackedApp = foregroundApp
                         Log.d("AppMonitor", "Empezó a usar: $foregroundApp")
+                        val appName = if (foregroundApp == "com.facebook.katana") "Facebook" else "Instagram"
+                        mostrarAlertaDeUso(appName)
                     }
                 } else {
 
@@ -104,7 +135,7 @@ class AppUsageMonitorService : Service() {
                 handler.postDelayed(runnable!!, 2000)
             }
         }
-        handler.post(runnable!!)
+        runnable?.let { handler.post(it) }
 
     }
 
