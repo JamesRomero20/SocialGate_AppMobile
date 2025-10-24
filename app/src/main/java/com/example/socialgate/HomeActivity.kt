@@ -23,17 +23,23 @@ import android.os.Build
 import android.os.Process
 import android.provider.Settings
 import android.util.Log
+import android.os.Handler
+import android.os.Looper
 
 class HomeActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: SocialDatabaseHelper
     private var userId: Int = -1
 
+    private val updateHandler = Handler(Looper.getMainLooper())
+    private lateinit var updateRunnable: Runnable
+
     private var tvNombre: TextView? = null
     private var tvTiempoHoy: TextView? = null
     private var tvLimite: TextView? = null
     private var tvFacebookTime: TextView? = null
     private var tvInstagramTime: TextView? = null
+
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -59,6 +65,14 @@ class HomeActivity : AppCompatActivity() {
             tvFacebookTime = findViewById(R.id.tvFacebookTime)
             tvInstagramTime = findViewById(R.id.tvInstagramTime)
 
+            updateRunnable = Runnable {
+                lifecycleScope.launch {
+                    loadUserData()
+                    loadUsageData()
+                }
+                updateHandler.postDelayed(updateRunnable, 2000)
+            }
+
             setupBottomNavigation()
 
             if (userId == -1) {
@@ -81,6 +95,15 @@ class HomeActivity : AppCompatActivity() {
             Toast.makeText(this, "Error al cargar la pantalla principal. Intente de nuevo.", Toast.LENGTH_LONG).show()
             finish()
         }
+    }
+
+    private fun formatMinutesToHoursAndMinutes(totalMinutes: Int): String {
+        if (totalMinutes < 0) return "0h 0m"
+
+        val hours = totalMinutes / 60
+
+        val minutes = totalMinutes % 60
+        return "${hours}h ${minutes}m"
     }
 
     private fun checkNotificationPermissionAndStartService() {
@@ -139,13 +162,16 @@ class HomeActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         if (userId != -1) {
-            lifecycleScope.launch {
-                loadUserData()
-                loadUsageData()
-            }
+
+            updateHandler.post(updateRunnable)
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+
+        updateHandler.removeCallbacks(updateRunnable)
+    }
     private fun startMonitoringService() {
         val serviceIntent = Intent(this, AppUsageMonitorService::class.java).apply {
             putExtra("USER_ID", userId)
@@ -254,23 +280,13 @@ class HomeActivity : AppCompatActivity() {
                 db?.close()
             }
 
-
             withContext(Dispatchers.Main) {
-
-                tvFacebookTime?.text = formatMinutesToHours(facebookTime)
-                tvInstagramTime?.text = formatMinutesToHours(instagramTime)
-                tvTiempoHoy?.text = formatMinutesToHours(totalTimeUsed)
-                tvLimite?.text = "Límite: ${formatMinutesToHours(timeLimit, showUnit = true)}"
+                tvFacebookTime?.text = formatMinutesToHoursAndMinutes(facebookTime)
+                tvInstagramTime?.text = formatMinutesToHoursAndMinutes(instagramTime)
+                tvTiempoHoy?.text = formatMinutesToHoursAndMinutes(totalTimeUsed)
+                tvLimite?.text = "Tiempo límite establecido: ${formatMinutesToHoursAndMinutes(timeLimit)}"
             }
         }
+    }
 
-    }
-    private fun formatMinutesToHours(minutes: Int, showUnit: Boolean = true): String {
-        val hours = minutes / 60.0
-        return if (showUnit) {
-            String.format("%.1f horas", hours)
-        } else {
-            String.format("%.1f H", hours)
-        }
-    }
 }
