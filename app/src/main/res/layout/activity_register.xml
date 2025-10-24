@@ -137,6 +137,7 @@
                 app:layout_constraintStart_toStartOf="@id/layoutPersonNameUser"
                 app:layout_constraintEnd_toEndOf="@id/layoutPersonNameUser"
                 app:layout_constraintTop_toBottomOf="@id/layoutSubName"
+                app:startIconDrawable="@drawable/password"
                 app:endIconMode="password_toggle">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -157,6 +158,7 @@
                 app:layout_constraintStart_toStartOf="@id/layoutPersonNameUser"
                 app:layout_constraintEnd_toEndOf="@id/layoutPersonNameUser"
                 app:layout_constraintTop_toBottomOf="@id/layoutPasswordName"
+                app:startIconDrawable="@drawable/password"
                 app:endIconMode="password_toggle">
 
                 <com.google.android.material.textfield.TextInputEditText

@@ -6,10 +6,12 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.os.Bundle
 import android.util.Log
+import android.util.Patterns
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+
 class MainActivity : AppCompatActivity() {
 
         private lateinit var dbHelper: SocialDatabaseHelper
@@ -48,6 +50,10 @@ class MainActivity : AppCompatActivity() {
 
             if (email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Por favor, ingrese correo y contraseña", Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            if (!validateLoginInputs(email, password)) {
                 return
             }
 
@@ -96,4 +102,24 @@ class MainActivity : AppCompatActivity() {
                 db?.close()
             }
         }
+    private fun validateLoginInputs(email: String, password: String): Boolean {
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Toast.makeText(this, "Correo electrónico inválido.", Toast.LENGTH_SHORT)
+                .show()
+            return false
+        }
+
+        if (password.length < 6 || password.length > 20) {
+            Toast.makeText(
+                this,
+                "La contraseña debe tener entre 6 y 20 caracteres.",
+                Toast.LENGTH_SHORT
+            ).show()
+            return false
+        }
+
+        return true
     }
+
+}

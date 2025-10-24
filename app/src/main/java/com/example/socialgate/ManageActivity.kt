@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import android.util.Patterns
 
 class ManageActivity : AppCompatActivity() {
 
@@ -135,6 +136,10 @@ class ManageActivity : AppCompatActivity() {
             return
         }
 
+        if (!validateInputs(username, name, email, password)) {
+            return
+        }
+
         var db: SQLiteDatabase? = null
         try {
             db = dbHelper.writableDatabase
@@ -201,6 +206,45 @@ class ManageActivity : AppCompatActivity() {
             }
             .setNegativeButton("No", null)
             .show()
+    }
+
+    private fun validateInputs(username: String, name: String, email: String, password: String): Boolean {
+
+        if (username.length > 20) {
+            Toast.makeText(this, "El nombre de usuario no debe exceder los 20 caracteres.", Toast.LENGTH_SHORT).show()
+            return false
+        }
+        if (!username.matches("^[a-zA-Z0-9]+$".toRegex())) {
+            Toast.makeText(this, "El nombre de usuario solo puede contener letras y números.", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Toast.makeText(this, "Por favor, ingrese un correo electrónico válido.", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        if (name.length > 30) {
+            Toast.makeText(this, "El nombre no debe exceder los 30 caracteres.", Toast.LENGTH_SHORT).show()
+            return false
+        }
+        if (!name.matches("^[a-zA-Z\\s]+$".toRegex())) {
+            Toast.makeText(this, "El nombre solo puede contener letras y espacios.", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        if (password.isNotEmpty()) {
+            if (password.length < 6) {
+                Toast.makeText(this, "La nueva contraseña debe tener al menos 6 caracteres.", Toast.LENGTH_SHORT).show()
+                return false
+            }
+            if (password.length > 20) {
+                Toast.makeText(this, "La nueva contraseña no debe exceder los 20 caracteres.", Toast.LENGTH_SHORT).show()
+                return false
+            }
+        }
+
+        return true
     }
 
     private fun logout() {

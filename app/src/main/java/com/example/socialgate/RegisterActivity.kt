@@ -3,6 +3,7 @@ package com.example.socialgate
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
+import android.util.Patterns
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -36,6 +37,43 @@ class RegisterActivity : AppCompatActivity() {
         return false
     }
 
+    private fun validateInputs(username: String, name: String, subname: String, email: String, password: String): Boolean {
+
+        if (username.length > 20) {
+            Toast.makeText(this, "El nombre de usuario no debe exceder los 20 caracteres.", Toast.LENGTH_SHORT).show()
+            return false
+        }
+        if (!username.matches("^[a-zA-Z0-9]+$".toRegex())) {
+            Toast.makeText(this, "El nombre de usuario solo puede contener letras y números.", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Toast.makeText(this, "Por favor, ingrese un correo electrónico válido.", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        if (name.length > 30 || subname.length > 30) {
+            Toast.makeText(this, "El nombre y el apellido no deben exceder los 30 caracteres.", Toast.LENGTH_SHORT).show()
+            return false
+        }
+        if (!name.matches("^[a-zA-Z\\s]+$".toRegex()) || !subname.matches("^[a-zA-Z\\s]+$".toRegex())) {
+            Toast.makeText(this, "El nombre y el apellido solo pueden contener letras y espacios.", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        if (password.length < 6) {
+            Toast.makeText(this, "La contraseña debe tener al menos 6 caracteres.", Toast.LENGTH_SHORT).show()
+            return false
+        }
+        if (password.length > 20) {
+            Toast.makeText(this, "La contraseña no debe exceder los 20 caracteres.", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        return true
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
@@ -61,6 +99,10 @@ class RegisterActivity : AppCompatActivity() {
 
             if (username.isEmpty() || name.isEmpty() || subname.isEmpty() || email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Por favor, complete todos los campos", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (!validateInputs(username, name, subname, email, password)) {
                 return@setOnClickListener
             }
 
