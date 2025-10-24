@@ -322,11 +322,12 @@ class ScheduleActivity : AppCompatActivity() {
                 null, null, null, "1"
             )
 
-            if (cursor.moveToFirst()) {
+            if (cursor != null && cursor.moveToFirst()) {
                 val limitInMinutes =
                     cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_TIEMPO_LIMITE))
                 val hours = limitInMinutes / 60f
-                sliderTiempo?.value = hours
+                val roundedHours = Math.round(hours * 100) / 100.0f
+                sliderTiempo?.value = roundedHours
             }
         } catch (e: SQLiteException) {
             Log.e("ScheduleActivity", "Error de BD al cargar límite de tiempo", e)
