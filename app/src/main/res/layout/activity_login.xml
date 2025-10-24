@@ -5,6 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
     <ScrollView
@@ -50,41 +51,48 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"/>
 
-            <EditText
-                android:id="@+id/editTextPersonName"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutPersonName"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
-                android:layout_height="50dp"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="32dp"
                 android:layout_marginTop="24dp"
                 android:layout_marginEnd="32dp"
-                android:background="@drawable/edittext_background"
-                android:drawableStart="@drawable/email"
-                android:drawablePadding="16dp"
-                android:ems="10"
                 android:hint="Correo Electrónico"
-                android:inputType="textEmailAddress"
-                android:padding="8dp"
-                android:textColorHint="#756C6C"
-                app:layout_constraintTop_toBottomOf="@id/imageView"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
+                app:layout_constraintTop_toBottomOf="@id/imageView"
+                app:startIconDrawable="@drawable/email">
 
-            <EditText
-                android:id="@+id/editTextPasswordName"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editTextPersonName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textEmailAddress" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutPasswordName"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
-                android:layout_height="50dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:background="@drawable/edittext_background"
-                android:drawableStart="@drawable/password"
-                android:drawablePadding="16dp"
-                android:ems="10"
-                android:hint="Clave"
-                android:inputType="textPassword"
-                android:padding="8dp"
-                android:textColorHint="#756c6c"
-                app:layout_constraintTop_toBottomOf="@id/editTextPersonName"
-                app:layout_constraintStart_toStartOf="@id/editTextPersonName"
-                app:layout_constraintEnd_toEndOf="@id/editTextPersonName"/>
+                android:hint="Contraseña"
+                app:layout_constraintEnd_toEndOf="@id/layoutPersonName"
+                app:layout_constraintStart_toStartOf="@id/layoutPersonName"
+                app:layout_constraintTop_toBottomOf="@id/layoutPersonName"
+                app:startIconDrawable="@drawable/password"
+                app:endIconMode="password_toggle">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editTextPasswordName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword" />
+
+            </com.google.android.material.textfield.TextInputLayout>
 
             <Button
                 android:id="@+id/btnIngresar"
@@ -94,7 +102,7 @@
                 android:backgroundTint="#1877F2"
                 android:paddingHorizontal="48dp"
                 android:text="Ingresar"
-                app:layout_constraintTop_toBottomOf="@id/editTextPasswordName"
+                app:layout_constraintTop_toBottomOf="@id/layoutPasswordName"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
 
