@@ -85,11 +85,7 @@ class HomeActivity : AppCompatActivity() {
                 return
             }
 
-            if (!hasUsageStatsPermission()) {
-                requestUsageStatsPermission()
-            } else {
-                checkNotificationPermissionAndStartService()
-            }
+            checkPermissionsAndStartService()
         }catch (e: Exception) {
             Log.e("HomeActivity", "Error crítico en la inicialización de HomeActivity", e)
             Toast.makeText(this, "Error al cargar la pantalla principal. Intente de nuevo.", Toast.LENGTH_LONG).show()
@@ -100,6 +96,7 @@ class HomeActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         if (userId != -1) {
+            checkPermissionsAndStartService()
             updateHandler.post(updateRunnable)
         }
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
@@ -121,7 +118,12 @@ class HomeActivity : AppCompatActivity() {
         return "${hours}h ${minutes}m"
     }
 
-    private fun checkNotificationPermissionAndStartService() {
+    private fun checkPermissionsAndStartService() {
+
+        if (!hasUsageStatsPermission()) {
+            requestUsageStatsPermission()
+            return
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             when {
                 ContextCompat.checkSelfPermission(
@@ -275,7 +277,7 @@ class HomeActivity : AppCompatActivity() {
                     Toast.makeText(this@HomeActivity, "Ocurrió un error inesperado en inicio.", Toast.LENGTH_SHORT).show()
                 }
             } finally {
-
+                cursor?.close()
             }
 
             withContext(Dispatchers.Main) {

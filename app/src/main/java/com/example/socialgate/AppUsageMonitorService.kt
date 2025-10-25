@@ -51,7 +51,7 @@ class AppUsageMonitorService : Service() {
         }
 
         val notification = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.logosocialgate) // Tu ícono
+            .setSmallIcon(R.drawable.logosocial)
             .setContentTitle("Alerta de Uso de Red Social")
             .setContentText("Has comenzado a usar $appName.")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -90,7 +90,7 @@ class AppUsageMonitorService : Service() {
             val notification = NotificationCompat.Builder(this, "USAGE_MONITOR_CHANNEL")
                 .setContentTitle("SocialGate")
                 .setContentText("Monitoreando el uso de aplicaciones.")
-                .setSmallIcon(R.drawable.logosocialgate)
+                .setSmallIcon(R.drawable.logosocial)
                 .build()
 
             startForeground(1, notification)

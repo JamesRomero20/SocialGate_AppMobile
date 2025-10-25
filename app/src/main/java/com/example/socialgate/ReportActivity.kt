@@ -359,7 +359,7 @@ class ReportActivity : AppCompatActivity() {
                     val document = Document(pdfDocument)
 
 
-                    val logoDrawable = ContextCompat.getDrawable(this, R.drawable.logosocialgate)
+                    val logoDrawable = ContextCompat.getDrawable(this, R.drawable.logosocial)
                     if (logoDrawable is BitmapDrawable) {
                         val bitmap = logoDrawable.bitmap
                         val stream = ByteArrayOutputStream()
