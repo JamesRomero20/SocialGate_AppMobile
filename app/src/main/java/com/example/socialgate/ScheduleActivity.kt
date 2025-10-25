@@ -58,6 +58,13 @@ class ScheduleActivity : AppCompatActivity() {
             finish()
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNav.selectedItemId = R.id.nav_horario
+    }
+
     private fun setupViews() {
         tvTiempoSeleccionado = findViewById(R.id.tvTiempoSeleccionado)
         sliderTiempo = findViewById(R.id.sliderTiempo)
@@ -99,10 +106,7 @@ class ScheduleActivity : AppCompatActivity() {
 
     private fun setupBottomNavigation() {
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
-        bottomNav.selectedItemId = R.id.nav_horario
-
         bottomNav.setOnItemSelectedListener { item ->
-            if (item.itemId == bottomNav.selectedItemId) return@setOnItemSelectedListener true
             val intent = when (item.itemId) {
                 R.id.nav_inicio -> Intent(this, HomeActivity::class.java)
                 R.id.nav_horario -> Intent(this, ScheduleActivity::class.java)
@@ -114,8 +118,10 @@ class ScheduleActivity : AppCompatActivity() {
                 putExtra("USER_ID", userId)
                 flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
             }
-            startActivity(intent)
-            overridePendingTransition(0, 0)
+            if (intent != null && item.itemId != bottomNav.selectedItemId) {
+                startActivity(intent)
+                overridePendingTransition(0, 0)
+            }
             true
         }
     }
@@ -212,7 +218,7 @@ class ScheduleActivity : AppCompatActivity() {
 
         } catch (e: Exception) {
             Log.e("ScheduleActivity", "Error inesperado al cargar horario", e)
-            Toast.makeText(this, "Ocurrió un error inesperado.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Ocurrió un error inesperado en horario.", Toast.LENGTH_SHORT).show()
         } finally {
             cursor?.close()
             db?.close()

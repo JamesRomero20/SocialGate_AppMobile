@@ -68,13 +68,16 @@ class ManageActivity : AppCompatActivity() {
             finish()
         }
     }
+    override fun onResume() {
+        super.onResume()
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNav.selectedItemId = R.id.nav_gestionar
+    }
 
     private fun setupBottomNavigation() {
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
-        bottomNav.selectedItemId = R.id.nav_gestionar
-
         bottomNav.setOnItemSelectedListener { item ->
-            if (item.itemId == bottomNav.selectedItemId) return@setOnItemSelectedListener true
+
             val intent = when (item.itemId) {
                 R.id.nav_inicio -> Intent(this, HomeActivity::class.java)
                 R.id.nav_horario -> Intent(this, ScheduleActivity::class.java)
@@ -86,8 +89,11 @@ class ManageActivity : AppCompatActivity() {
                 putExtra("USER_ID", userId)
                 flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
             }
-            startActivity(intent)
-            overridePendingTransition(0, 0)
+
+            if (intent != null && item.itemId != bottomNav.selectedItemId) {
+                startActivity(intent)
+                overridePendingTransition(0, 0)
+            }
             true
         }
     }
@@ -113,7 +119,7 @@ class ManageActivity : AppCompatActivity() {
             Toast.makeText(this, "No se pudieron cargar los datos del usuario.", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Log.e("ManageActivity", "Error inesperado al cargar datos del usuario", e)
-            Toast.makeText(this, "Ocurrió un error inesperado.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Ocurrió un error inesperado en gestionar.", Toast.LENGTH_SHORT).show()
         } finally {
             cursor?.close()
             db?.close()

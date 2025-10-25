@@ -46,6 +46,7 @@ import kotlinx.coroutines.withContext
 import com.github.mikephil.charting.formatter.ValueFormatter
 import android.graphics.drawable.BitmapDrawable
 import com.itextpdf.layout.property.HorizontalAlignment
+import android.database.Cursor
 
 class ReportActivity : AppCompatActivity() {
 
@@ -78,18 +79,6 @@ class ReportActivity : AppCompatActivity() {
             }
         }
 
-
-    override fun onResume() {
-        super.onResume()
-        if (userId != -1) {
-            updateHandler.post(updateRunnable)
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        updateHandler.removeCallbacks(updateRunnable)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -131,6 +120,21 @@ class ReportActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (userId != -1) {
+            updateHandler.post(updateRunnable)
+        }
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNav.selectedItemId = R.id.nav_reporte
+
+    }
+
+    override fun onPause() {
+        super.onPause()
+        updateHandler.removeCallbacks(updateRunnable)
+    }
+
 
     private fun formatSecondsToHoursAndMinutes(totalSeconds: Int): String {
         if (totalSeconds < 0) return "0h 0m"
@@ -143,10 +147,8 @@ class ReportActivity : AppCompatActivity() {
 
     private fun setupBottomNavigation() {
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
-        bottomNav.selectedItemId = R.id.nav_reporte
-
         bottomNav.setOnItemSelectedListener { item ->
-            if (item.itemId == bottomNav.selectedItemId) return@setOnItemSelectedListener true
+
             val intent = when (item.itemId) {
                 R.id.nav_inicio -> Intent(this, HomeActivity::class.java)
                 R.id.nav_horario -> Intent(this, ScheduleActivity::class.java)
@@ -159,8 +161,11 @@ class ReportActivity : AppCompatActivity() {
                 flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
 
             }
-            startActivity(intent)
-            overridePendingTransition(0, 0)
+
+            if (intent != null && item.itemId != bottomNav.selectedItemId) {
+                startActivity(intent)
+                overridePendingTransition(0, 0)
+            }
             true
         }
     }
@@ -168,6 +173,7 @@ class ReportActivity : AppCompatActivity() {
     private suspend fun loadUserData() {
         withContext(Dispatchers.IO) {
             var db: SQLiteDatabase? = null
+            var cursor: Cursor? = null
             try {
                 db = dbHelper.readableDatabase
                 val cursor = db.query(
@@ -180,11 +186,10 @@ class ReportActivity : AppCompatActivity() {
                     userName = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_NOMBRE))
                     userEmail = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_EMAIL))
                 }
-                cursor?.close()
             } catch (e: Exception) {
                 Log.e("ReportActivity", "Error al cargar datos del usuario", e)
             } finally {
-                db?.close()
+                cursor?.close()
             }
         }
     }
@@ -258,7 +263,7 @@ class ReportActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Log.e("ReportActivity", "Error al cargar datos del reporte", e)
             } finally {
-                db?.close()
+
             }
 
             withContext(Dispatchers.Main) {

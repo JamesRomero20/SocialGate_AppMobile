@@ -97,6 +97,21 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (userId != -1) {
+            updateHandler.post(updateRunnable)
+        }
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNav.selectedItemId = R.id.nav_inicio
+
+    }
+
+    override fun onPause() {
+        super.onPause()
+        updateHandler.removeCallbacks(updateRunnable)
+    }
+
     private fun formatMinutesToHoursAndMinutes(totalMinutes: Int): String {
         if (totalMinutes < 0) return "0h 0m"
 
@@ -133,12 +148,7 @@ class HomeActivity : AppCompatActivity() {
     }
     private fun setupBottomNavigation() {
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
-        bottomNav.selectedItemId = R.id.nav_inicio
-
         bottomNav.setOnItemSelectedListener { item ->
-            if (item.itemId == bottomNav.selectedItemId) {
-                return@setOnItemSelectedListener true
-            }
 
             val intent = when (item.itemId) {
                 R.id.nav_inicio -> Intent(this, HomeActivity::class.java)
@@ -153,25 +163,15 @@ class HomeActivity : AppCompatActivity() {
                 flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
             }
 
-            startActivity(intent)
-            overridePendingTransition(0, 0)
+            if (intent != null && item.itemId != bottomNav.selectedItemId) {
+                startActivity(intent)
+                overridePendingTransition(0, 0)
+            }
             true
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        if (userId != -1) {
 
-            updateHandler.post(updateRunnable)
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-
-        updateHandler.removeCallbacks(updateRunnable)
-    }
     private fun startMonitoringService() {
         val serviceIntent = Intent(this, AppUsageMonitorService::class.java).apply {
             putExtra("USER_ID", userId)
@@ -228,7 +228,6 @@ class HomeActivity : AppCompatActivity() {
                 }
             } finally {
                 cursor?.close()
-                db?.close()
             }
         }
     }
@@ -273,11 +272,10 @@ class HomeActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Log.e("HomeActivity", "Error inesperado al cargar tiempo de uso", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@HomeActivity, "Ocurrió un error inesperado.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@HomeActivity, "Ocurrió un error inesperado en inicio.", Toast.LENGTH_SHORT).show()
                 }
             } finally {
-                cursor?.close()
-                db?.close()
+
             }
 
             withContext(Dispatchers.Main) {
