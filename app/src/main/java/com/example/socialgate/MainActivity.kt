@@ -6,7 +6,6 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.os.Bundle
 import android.util.Log
-import android.util.Patterns
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -23,13 +22,13 @@ class MainActivity : AppCompatActivity() {
             try {
                 dbHelper = SocialDatabaseHelper(this)
 
-                val emailEditText = findViewById<EditText>(R.id.editTextPersonName)
+                val userInputEditText = findViewById<EditText>(R.id.editTextPersonName)
                 val passwordEditText = findViewById<EditText>(R.id.editTextPasswordName)
                 val loginButton = findViewById<Button>(R.id.btnIngresar)
                 val registerButton = findViewById<Button>(R.id.btnCuenta)
 
                 loginButton.setOnClickListener {
-                    handleLogin(emailEditText, passwordEditText)
+                    handleLogin(userInputEditText, passwordEditText)
                 }
 
                 registerButton.setOnClickListener {
@@ -44,16 +43,16 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        private fun handleLogin(emailEditText: EditText, passwordEditText: EditText) {
-            val email = emailEditText.text.toString().trim()
+        private fun handleLogin(userInputEditText: EditText, passwordEditText: EditText) {
+            val userInput = userInputEditText.text.toString().trim()
             val password = passwordEditText.text.toString().trim()
 
-            if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Por favor, ingrese correo y contraseña", Toast.LENGTH_SHORT).show()
+            if (userInput.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, "Por favor, ingrese sus credenciales", Toast.LENGTH_SHORT).show()
                 return
             }
 
-            if (!validateLoginInputs(email, password)) {
+            if (!validateLoginInputs(userInput, password)) {
                 return
             }
 
@@ -61,8 +60,8 @@ class MainActivity : AppCompatActivity() {
             var cursor: Cursor? = null
             try {
                 db = dbHelper.readableDatabase
-                val selection = "${SocialDatabaseHelper.KEY_EMAIL} = ? AND ${SocialDatabaseHelper.KEY_CLAVE} = ?"
-                val selectionArgs = arrayOf(email, password)
+                val selection = "((${SocialDatabaseHelper.KEY_EMAIL} = ?) OR (${SocialDatabaseHelper.KEY_USUARIO} = ?)) AND ${SocialDatabaseHelper.KEY_CLAVE} = ?"
+                val selectionArgs = arrayOf(userInput, userInput, password)
 
                 cursor = db.query(
                     SocialDatabaseHelper.TABLE_USUARIO,
@@ -73,10 +72,11 @@ class MainActivity : AppCompatActivity() {
                 )
 
                 if (cursor != null && cursor.moveToFirst()) {
-                    Toast.makeText(this, "¡Bienvenido!", Toast.LENGTH_SHORT).show()
 
-                    val userIdColumnIndex = cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_ID_USUARIO)
-                    val userId = cursor.getInt(userIdColumnIndex)
+                    val userName = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_NOMBRE))
+                    val userId = cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_ID_USUARIO))
+
+                    Toast.makeText(this, "¡Bienvenido, $userName!", Toast.LENGTH_SHORT).show()
 
                     val intent = Intent(this, HomeActivity::class.java).apply {
                         putExtra("USER_ID", userId)
@@ -85,7 +85,7 @@ class MainActivity : AppCompatActivity() {
                     finish()
 
                 } else {
-                    Toast.makeText(this, "Correo o contraseña incorrectos", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "Credenciales incorrectas", Toast.LENGTH_LONG).show()
                 }
 
             } catch (e: SQLiteException) {
@@ -97,18 +97,10 @@ class MainActivity : AppCompatActivity() {
                 Log.e("MainActivity", "Error inesperado durante el login", e)
                 Toast.makeText(this, "Ocurrió un error inesperado.", Toast.LENGTH_SHORT).show()
             } finally {
-
                 cursor?.close()
-                db?.close()
             }
         }
     private fun validateLoginInputs(email: String, password: String): Boolean {
-
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            Toast.makeText(this, "Correo electrónico inválido.", Toast.LENGTH_SHORT)
-                .show()
-            return false
-        }
 
         if (password.length < 6 || password.length > 20) {
             Toast.makeText(

@@ -152,7 +152,7 @@ class AppUsageMonitorService : Service() {
         }
     }
 
-    private fun mostrarNotificacionHorarioAcademico() {
+    private fun showAcademicScheduleNotification() {
         val channelId = "ACADEMIC_BLOCK_CHANNEL"
         val notificationId = 4
 
@@ -174,7 +174,7 @@ class AppUsageMonitorService : Service() {
         }
     }
 
-    private suspend fun verificarHorarioAcademico(): Boolean {
+    private suspend fun checkAcademicSchedule(): Boolean {
         return withContext(Dispatchers.IO) {
             var isBlocked = false
             var db: SQLiteDatabase? = null
@@ -274,8 +274,8 @@ class AppUsageMonitorService : Service() {
                         if (targetApps.contains(foregroundApp)) {
                             awayCounter = 0
 
-                            if (verificarHorarioAcademico()) {
-                                mostrarNotificacionHorarioAcademico()
+                            if (checkAcademicSchedule()) {
+                                showAcademicScheduleNotification()
                                 blockApp()
                                 if (lastTrackedApp != null) {
                                     lastTrackedApp = null
