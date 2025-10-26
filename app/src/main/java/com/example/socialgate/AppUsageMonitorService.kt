@@ -28,6 +28,7 @@ import android.app.PendingIntent
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.Calendar
 
 class AppUsageMonitorService : Service() {
 
@@ -151,6 +152,75 @@ class AppUsageMonitorService : Service() {
         }
     }
 
+    private fun mostrarNotificacionHorarioAcademico() {
+        val channelId = "ACADEMIC_BLOCK_CHANNEL"
+        val notificationId = 4
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(channelId, "Alertas de Horario Académico", NotificationManager.IMPORTANCE_HIGH)
+            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        }
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.logosocial)
+            .setContentTitle("Acceso Denegado")
+            .setContentText("No puedes usar redes sociales durante tu horario académico.")
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setAutoCancel(true)
+            .build()
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+            NotificationManagerCompat.from(this).notify(notificationId, notification)
+        }
+    }
+
+    private suspend fun verificarHorarioAcademico(): Boolean {
+        return withContext(Dispatchers.IO) {
+            var isBlocked = false
+            var db: SQLiteDatabase? = null
+            var cursor: Cursor? = null
+
+            try {
+
+                val calendar = Calendar.getInstance()
+                val dayOfWeekStr = when (calendar.get(Calendar.DAY_OF_WEEK)) {
+                    Calendar.MONDAY -> "Lunes"
+                    Calendar.TUESDAY -> "Martes"
+                    Calendar.WEDNESDAY -> "Miércoles"
+                    Calendar.THURSDAY -> "Jueves"
+                    Calendar.FRIDAY -> "Viernes"
+                    Calendar.SATURDAY -> "Sábado"
+                    Calendar.SUNDAY -> "Domingo"
+                    else -> ""
+                }
+                val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(calendar.time)
+
+                db = dbHelper.readableDatabase
+                cursor = db.query(
+                    SocialDatabaseHelper.TABLE_HORARIO_BLOQUEO,
+                    arrayOf(SocialDatabaseHelper.KEY_HORA_INICIO, SocialDatabaseHelper.KEY_HORA_FIN),
+                    "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ? AND ${SocialDatabaseHelper.KEY_DIA_SEMANA} = ? AND ${SocialDatabaseHelper.KEY_HORARIO_ACTIVO} = 1",
+                    arrayOf(userId.toString(), dayOfWeekStr),
+                    null, null, null
+                )
+
+                if (cursor != null && cursor.moveToFirst()) {
+                    val startTime = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_HORA_INICIO))
+                    val endTime = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_HORA_FIN))
+
+                    if (currentTime >= startTime && currentTime < endTime) {
+                        isBlocked = true
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("AppMonitor", "Error al verificar horario académico", e)
+            } finally {
+                cursor?.close()
+            }
+            isBlocked
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         try {
@@ -204,6 +274,15 @@ class AppUsageMonitorService : Service() {
                         if (targetApps.contains(foregroundApp)) {
                             awayCounter = 0
 
+                            if (verificarHorarioAcademico()) {
+                                mostrarNotificacionHorarioAcademico()
+                                blockApp()
+                                if (lastTrackedApp != null) {
+                                    lastTrackedApp = null
+                                    startTime = 0
+                                }
+                                return@launch
+                            }
                             if (verifyTimeLimit(foregroundApp)) {
                                 val appName = if (foregroundApp == "com.facebook.katana") "Facebook" else "Instagram"
                                 displayBlockNotification(appName)

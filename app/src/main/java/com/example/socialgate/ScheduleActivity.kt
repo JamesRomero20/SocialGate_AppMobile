@@ -31,6 +31,9 @@ class ScheduleActivity : AppCompatActivity() {
     private var userId: Int = -1
 
     private var switchLimiteTiempo: com.google.android.material.switchmaterial.SwitchMaterial? = null
+
+    private var switchHorario: com.google.android.material.switchmaterial.SwitchMaterial? = null
+    // ...
     private var tvTiempoSeleccionado: TextView? = null
     private var sliderTiempo: Slider? = null
     private var dayTextViews: Map<String, TextView>? = null
@@ -86,6 +89,27 @@ class ScheduleActivity : AppCompatActivity() {
             "Domingo" to findViewById(R.id.dayDomingo)
         )
         switchLimiteTiempo = findViewById(R.id.switchLimiteTiempo)
+        switchHorario = findViewById(R.id.switchHorario)
+    }
+
+    private fun updateHorarioActivo(isActive: Boolean) {
+        var db: SQLiteDatabase? = null
+        try {
+            db = dbHelper.writableDatabase
+            val values = ContentValues().apply {
+                put(SocialDatabaseHelper.KEY_HORARIO_ACTIVO, if (isActive) 1 else 0)
+            }
+            db.update(
+                SocialDatabaseHelper.TABLE_HORARIO_BLOQUEO,
+                values,
+                "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ?",
+                arrayOf(userId.toString())
+            )
+        } catch (e: SQLiteException) {
+            Log.e("ScheduleActivity", "Error al actualizar estado del horario", e)
+        } finally {
+            db?.close()
+        }
     }
 
     private fun setupListeners() {
@@ -131,6 +155,14 @@ class ScheduleActivity : AppCompatActivity() {
                 saveTimeLimitToDatabase(0f)
                 tvTiempoSeleccionado?.text = "Sin limite"
             }
+        }
+
+        switchHorario?.setOnCheckedChangeListener { _, isChecked ->
+            updateHorarioActivo(isChecked)
+            findViewById<Button>(R.id.btnEditarHorario).isEnabled = isChecked
+            dayTextViews?.values?.forEach { it.isEnabled = isChecked }
+            val message = if (isChecked) "Horario académico activado" else "Horario académico desactivado"
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -219,7 +251,8 @@ class ScheduleActivity : AppCompatActivity() {
                 arrayOf(
                     SocialDatabaseHelper.KEY_HORA_INICIO,
                     SocialDatabaseHelper.KEY_HORA_FIN,
-                    SocialDatabaseHelper.KEY_DIA_SEMANA
+                    SocialDatabaseHelper.KEY_DIA_SEMANA,
+                    SocialDatabaseHelper.KEY_HORARIO_ACTIVO
                 ),
                 "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ?",
                 arrayOf(userId.toString()),
@@ -229,10 +262,15 @@ class ScheduleActivity : AppCompatActivity() {
             var startTime = ""
             var endTime = ""
 
+            var isHorarioActive = false
+
             while (cursor.moveToNext()) {
                 if (startTime.isEmpty()) {
                     startTime = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_HORA_INICIO))
                     endTime = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_HORA_FIN))
+                }
+                if (cursor.isFirst) {
+                    isHorarioActive = cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_HORARIO_ACTIVO)) == 1
                 }
                 val dia = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_DIA_SEMANA))
                 selectedDays.add(dia)
@@ -245,6 +283,10 @@ class ScheduleActivity : AppCompatActivity() {
             dayTextViews?.forEach { (dayName, textView) ->
                 updateDayView(textView, selectedDays.contains(dayName))
             }
+
+            switchHorario?.isChecked = isHorarioActive
+            findViewById<Button>(R.id.btnEditarHorario).isEnabled = isHorarioActive
+            dayTextViews?.values?.forEach { it.isEnabled = isHorarioActive }
 
         } catch (e: Exception) {
             Log.e("ScheduleActivity", "Error inesperado al cargar horario", e)
