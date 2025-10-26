@@ -133,6 +133,26 @@ class RegisterActivity : AppCompatActivity() {
             val newRowId = db.insert(SocialDatabaseHelper.TABLE_USUARIO, null, values)
 
             if (newRowId != -1L) {
+                //val defaultLimit = 0
+
+                /*val valuesFb = ContentValues().apply {
+                    put(SocialDatabaseHelper.KEY_ID_USUARIO_FK, newRowId)
+                    put(SocialDatabaseHelper.KEY_RED_SOCIAL_CONTROL, "Facebook")
+                    put(SocialDatabaseHelper.KEY_TIEMPO_LIMITE, defaultLimit)
+                    put(SocialDatabaseHelper.KEY_TIEMPO_USADO, 0)
+                    put(SocialDatabaseHelper.KEY_ESTADO_ALERTA, "OK")
+                }
+                db.insert(SocialDatabaseHelper.TABLE_CONTROL_TIEMPO, null, valuesFb)
+
+                val valuesIg = ContentValues().apply {
+                    put(SocialDatabaseHelper.KEY_ID_USUARIO_FK, newRowId)
+                    put(SocialDatabaseHelper.KEY_RED_SOCIAL_CONTROL, "Instagram")
+                    put(SocialDatabaseHelper.KEY_TIEMPO_LIMITE, defaultLimit)
+                    put(SocialDatabaseHelper.KEY_TIEMPO_USADO, 0)
+                    put(SocialDatabaseHelper.KEY_ESTADO_ALERTA, "OK")
+                }
+                db.insert(SocialDatabaseHelper.TABLE_CONTROL_TIEMPO, null, valuesIg)*/
+
                 Toast.makeText(this, "Usuario registrado con éxito", Toast.LENGTH_LONG).show()
                 finish()
             } else {

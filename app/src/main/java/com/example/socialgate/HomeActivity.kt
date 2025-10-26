@@ -15,6 +15,7 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
+import android.net.Uri
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -70,7 +71,7 @@ class HomeActivity : AppCompatActivity() {
                     loadUserData()
                     loadUsageData()
                 }
-                updateHandler.postDelayed(updateRunnable, 2000)
+                updateHandler.postDelayed(updateRunnable, 1000)
             }
 
             setupBottomNavigation()
@@ -85,7 +86,6 @@ class HomeActivity : AppCompatActivity() {
                 return
             }
 
-            checkPermissionsAndStartService()
         }catch (e: Exception) {
             Log.e("HomeActivity", "Error crítico en la inicialización de HomeActivity", e)
             Toast.makeText(this, "Error al cargar la pantalla principal. Intente de nuevo.", Toast.LENGTH_LONG).show()
@@ -124,6 +124,12 @@ class HomeActivity : AppCompatActivity() {
             requestUsageStatsPermission()
             return
         }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            requestOverlayPermission()
+            return
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             when {
                 ContextCompat.checkSelfPermission(
@@ -147,6 +153,15 @@ class HomeActivity : AppCompatActivity() {
 
             startMonitoringService()
         }
+    }
+
+    private fun requestOverlayPermission() {
+        Toast.makeText(this, "Por favor, active el permiso para que SocialGate pueda bloquear Facebook o Instagram", Toast.LENGTH_LONG).show()
+        val intent = Intent(
+            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+            Uri.parse("package:$packageName")
+        )
+        startActivity(intent)
     }
     private fun setupBottomNavigation() {
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)

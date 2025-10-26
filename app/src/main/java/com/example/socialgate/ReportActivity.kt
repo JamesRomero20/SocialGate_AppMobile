@@ -98,11 +98,11 @@ class ReportActivity : AppCompatActivity() {
                     loadUserData()
                     loadReportData()
                 }
-                updateHandler.postDelayed(updateRunnable, 2000)
+                updateHandler.postDelayed(updateRunnable, 1000)
             }
 
             findViewById<Button>(R.id.btnGenerarReporte).setOnClickListener {
-                generarPdf()
+                generatePdf()
             }
 
             setupBottomNavigation()
@@ -320,7 +320,7 @@ class ReportActivity : AppCompatActivity() {
         barChart?.invalidate()
     }
 
-    private fun generarPdf() {
+    private fun generatePdf() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             createPdf()
         } else {

@@ -24,6 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.app.PendingIntent
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -35,12 +36,14 @@ class AppUsageMonitorService : Service() {
     private var lastTrackedApp: String? = null
     private var startTime: Long = 0
 
+    private var awayCounter = 0
+
     private lateinit var dbHelper: SocialDatabaseHelper
 
     private var userId: Int = -1
     private val targetApps = setOf("com.facebook.katana", "com.instagram.android")
 
-    private fun mostrarAlertaDeUso(appName: String) {
+    private fun showUsageAlert(appName: String) {
         val channelId = "USAGE_ALERT_CHANNEL"
         val notificationId = 2
 
@@ -62,6 +65,89 @@ class AppUsageMonitorService : Service() {
             NotificationManagerCompat.from(this).notify(notificationId, notification)
         } else {
             Log.w("AppMonitor", "No se puede mostrar la alerta: permiso POST_NOTIFICATIONS denegado.")
+        }
+    }
+
+
+    private fun displayBlockNotification(appName: String) {
+        val channelId = "BLOCK_ALERT_CHANNEL"
+        val notificationId = 3
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(channelId, "Alertas de Bloqueo", NotificationManager.IMPORTANCE_HIGH)
+            channel.description = "Notificaciones para cuando el tiempo de uso se ha agotado."
+            val manager = getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(channel)
+        }
+
+        val intent = Intent(this, HomeActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("USER_ID", userId)
+        }
+
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(
+            this, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.logosocial)
+            .setContentTitle("¡Tiempo Agotado!")
+            .setContentText("Se ha terminado tu tiempo límite para $appName.")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .build()
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+            NotificationManagerCompat.from(this).notify(notificationId, notification)
+        }
+    }
+
+    private fun blockApp() {
+        val intent = Intent(Intent.ACTION_MAIN)
+        intent.addCategory(Intent.CATEGORY_HOME)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
+    }
+
+    private suspend fun verifyTimeLimit(packageName: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            var limiteExcedido = false
+            var db: SQLiteDatabase? = null
+            var cursor: Cursor? = null
+
+            val socialNetworkName = when (packageName) {
+                "com.facebook.katana" -> "Facebook"
+                "com.instagram.android" -> "Instagram"
+                else -> return@withContext false
+            }
+
+            try {
+                db = dbHelper.readableDatabase
+                cursor = db.query(
+                    SocialDatabaseHelper.TABLE_CONTROL_TIEMPO,
+                    arrayOf(SocialDatabaseHelper.KEY_TIEMPO_USADO, SocialDatabaseHelper.KEY_TIEMPO_LIMITE),
+                    "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ? AND ${SocialDatabaseHelper.KEY_RED_SOCIAL_CONTROL} = ?",
+                    arrayOf(userId.toString(), socialNetworkName), null, null, null
+                )
+
+                if (cursor != null && cursor.moveToFirst()) {
+                    val tiempoUsadoGuardado = cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_TIEMPO_USADO))
+                    val tiempoLimite = cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_TIEMPO_LIMITE))
+
+                    val tiempoSesionActualMinutos = if (startTime > 0) ((System.currentTimeMillis() - startTime) / 60000).toInt() else 0
+
+                    if (tiempoLimite > 0 && (tiempoUsadoGuardado + tiempoSesionActualMinutos >= tiempoLimite)) {
+                        limiteExcedido = true
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("AppMonitor", "Error al verificar el límite de tiempo", e)
+            } finally {
+                cursor?.close()
+            }
+            limiteExcedido
         }
     }
 
@@ -105,43 +191,68 @@ class AppUsageMonitorService : Service() {
 
     private fun startMonitoring() {
         if (runnable != null) return
-        runnable = Runnable {
-            try {
-                val foregroundApp = getForegroundApp()
+        runnable = object : Runnable {
+            override fun run() {
+                CoroutineScope(Dispatchers.Main).launch {
+                    try {
+                        val foregroundApp = getForegroundApp()
 
-                if (targetApps.contains(foregroundApp)) {
+                        if (foregroundApp == null) {
+                            return@launch
+                        }
 
-                    if (foregroundApp != lastTrackedApp) {
+                        if (targetApps.contains(foregroundApp)) {
+                            awayCounter = 0
 
-                        startTime = System.currentTimeMillis()
-                        lastTrackedApp = foregroundApp
-                        Log.d("AppMonitor", "Empezó a usar: $foregroundApp")
-                        val appName = if (foregroundApp == "com.facebook.katana") "Facebook" else "Instagram"
-                        mostrarAlertaDeUso(appName)
-                    }
-                } else {
+                            if (verifyTimeLimit(foregroundApp)) {
+                                val appName = if (foregroundApp == "com.facebook.katana") "Facebook" else "Instagram"
+                                displayBlockNotification(appName)
+                                blockApp()
+                                lastTrackedApp = null
+                                startTime = 0
+                            } else {
 
-                    if (lastTrackedApp != null) {
-                        val endTime = System.currentTimeMillis()
-                        val timeInSeconds = (endTime - startTime) / 1000
-                        Log.d(
-                            "AppMonitor",
-                            "Dejó de usar: $lastTrackedApp. Duración: $timeInSeconds segundos."
-                        )
+                                if (lastTrackedApp != foregroundApp) {
+                                    if (lastTrackedApp != null) {
+                                        val endTime = System.currentTimeMillis()
+                                        val timeInSeconds = (endTime - startTime) / 1000
+                                        Log.d("AppMonitor", "CAMBIO de app. Dejó de usar: $lastTrackedApp. Duración: $timeInSeconds s.")
+                                        updateUserUsageTime(lastTrackedApp!!, timeInSeconds)
+                                    }
+                                    startTime = System.currentTimeMillis()
+                                    lastTrackedApp = foregroundApp
+                                    Log.d("AppMonitor", "Empezó a usar: $foregroundApp")
+                                    val appName = if (foregroundApp == "com.facebook.katana") "Facebook" else "Instagram"
+                                    showUsageAlert(appName)
+                                }
+                            }
 
-                        updateUserUsageTime(lastTrackedApp!!, timeInSeconds)
-
-                        lastTrackedApp = null
+                        } else {
+                            if (lastTrackedApp != null) {
+                                awayCounter++
+                                if (awayCounter >= 3) {
+                                    val endTime = System.currentTimeMillis()
+                                    val timeInSeconds = (endTime - startTime) / 1000
+                                    if (timeInSeconds > 0) {
+                                        Log.d("AppMonitor", "Dejó de usar: $lastTrackedApp. Duración: $timeInSeconds segundos.")
+                                        updateUserUsageTime(lastTrackedApp!!, timeInSeconds)
+                                    } else {
+                                        Log.d("AppMonitor", "Sesión demasiado corta para guardar ($timeInSeconds s), reseteando.")
+                                    }
+                                    lastTrackedApp = null
+                                    startTime = 0
+                                    awayCounter = 0
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("AppMonitor", "Error dentro del bucle de monitoreo", e)
                     }
                 }
-            } catch (e: Exception) {
-                Log.e("AppMonitor", "Error dentro del bucle de monitoreo", e)
-            } finally {
-                handler.postDelayed(runnable!!, 2000)
+                handler.postDelayed(this, 1000)
             }
         }
-        runnable?.let { handler.post(it) }
-
+        handler.post(runnable!!)
     }
 
     private fun updateUserUsageTime(packageName: String, durationSeconds: Long) {
