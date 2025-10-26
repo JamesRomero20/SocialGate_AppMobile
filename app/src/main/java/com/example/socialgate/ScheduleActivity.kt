@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.slider.Slider
 import android.app.TimePickerDialog
+import android.content.Context
 import android.view.LayoutInflater
 import androidx.appcompat.app.AlertDialog
 import android.content.Intent
@@ -21,8 +22,15 @@ import androidx.core.content.ContextCompat
 
 class ScheduleActivity : AppCompatActivity() {
 
+    companion object {
+        const val PREFS_NAME = "SchedulePrefs"
+        const val KEY_SAVED_LIMIT = "saved_limit_hours"
+    }
+
     private lateinit var dbHelper: SocialDatabaseHelper
     private var userId: Int = -1
+
+    private var switchLimiteTiempo: com.google.android.material.switchmaterial.SwitchMaterial? = null
     private var tvTiempoSeleccionado: TextView? = null
     private var sliderTiempo: Slider? = null
     private var dayTextViews: Map<String, TextView>? = null
@@ -77,6 +85,7 @@ class ScheduleActivity : AppCompatActivity() {
             "Sábado" to findViewById(R.id.daySabado),
             "Domingo" to findViewById(R.id.dayDomingo)
         )
+        switchLimiteTiempo = findViewById(R.id.switchLimiteTiempo)
     }
 
     private fun setupListeners() {
@@ -94,12 +103,33 @@ class ScheduleActivity : AppCompatActivity() {
             override fun onStartTrackingTouch(slider: Slider) {}
             override fun onStopTrackingTouch(slider: Slider) {
                 saveTimeLimitToDatabase(slider.value)
+                val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                prefs.edit().putFloat(KEY_SAVED_LIMIT, slider.value).apply()
+                Toast.makeText(this@ScheduleActivity, "Límite de tiempo guardado", Toast.LENGTH_SHORT).show()
             }
         })
 
         dayTextViews?.forEach { (dayName, textView) ->
             textView.setOnClickListener {
                 toggleDaySelection(dayName, textView)
+            }
+        }
+
+        switchLimiteTiempo?.setOnCheckedChangeListener { _, isChecked ->
+            sliderTiempo?.isEnabled = isChecked
+            if (isChecked) {
+                Toast.makeText(this, "Límite de tiempo activado", Toast.LENGTH_SHORT).show()
+                val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                val savedLimit = prefs.getFloat(KEY_SAVED_LIMIT, 0f)
+                sliderTiempo?.value = savedLimit
+                saveTimeLimitToDatabase(savedLimit)
+                val horas = savedLimit.toInt()
+                val minutos = ((savedLimit - horas) * 60).toInt()
+                tvTiempoSeleccionado?.text = if (minutos == 0) "$horas horas" else "$horas horas y $minutos minutos"
+            } else {
+                Toast.makeText(this, "Límite de tiempo desactivado", Toast.LENGTH_SHORT).show()
+                saveTimeLimitToDatabase(0f)
+                tvTiempoSeleccionado?.text = "Sin limite"
             }
         }
     }
@@ -307,7 +337,7 @@ class ScheduleActivity : AppCompatActivity() {
                 }
                 db.insert(SocialDatabaseHelper.TABLE_CONTROL_TIEMPO, null, valuesIg)
             }
-            Toast.makeText(this, "Límite de tiempo guardado", Toast.LENGTH_SHORT).show()
+
         } catch (e: SQLiteException) {
             Log.e("ScheduleActivity", "Error de BD al guardar límite de tiempo", e)
             Toast.makeText(this, "Error al guardar el límite de tiempo.", Toast.LENGTH_SHORT).show()
@@ -328,12 +358,30 @@ class ScheduleActivity : AppCompatActivity() {
                 null, null, null, "1"
             )
 
+            val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val savedLimitHours = prefs.getFloat(KEY_SAVED_LIMIT, 0f)
+
             if (cursor != null && cursor.moveToFirst()) {
                 val limitInMinutes =
                     cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_TIEMPO_LIMITE))
                 val hours = limitInMinutes / 60f
                 val roundedHours = Math.round(hours * 100) / 100.0f
                 sliderTiempo?.value = roundedHours
+                if (limitInMinutes <= 0) {
+                    switchLimiteTiempo?.isChecked = false
+                    sliderTiempo?.isEnabled = false
+                    tvTiempoSeleccionado?.text = "Sin límite"
+                    sliderTiempo?.value = savedLimitHours
+                } else {
+                    switchLimiteTiempo?.isChecked = true
+                    sliderTiempo?.isEnabled = true
+                    val hours = limitInMinutes / 60f
+                    sliderTiempo?.value = hours
+                }
+            } else {
+                switchLimiteTiempo?.isChecked = false
+                sliderTiempo?.isEnabled = false
+                tvTiempoSeleccionado?.text = "Sin límite"
             }
         } catch (e: SQLiteException) {
             Log.e("ScheduleActivity", "Error de BD al cargar límite de tiempo", e)
