@@ -11,6 +11,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
+
 class MainActivity : AppCompatActivity() {
 
         private lateinit var dbHelper: SocialDatabaseHelper
@@ -32,6 +33,8 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 registerButton.setOnClickListener {
+                    userInputEditText.setText("")
+                    passwordEditText.setText("")
                     val intent = Intent(this, RegisterActivity::class.java)
                     startActivity(intent)
                 }
@@ -112,6 +115,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         return true
+    }
+
+    override fun onResume() {
+        super.onResume()
+        findViewById<android.view.View>(R.id.main).requestFocus()
+
     }
 
 }

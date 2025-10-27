@@ -42,13 +42,14 @@ class HomeActivity : AppCompatActivity() {
     private var tvInstagramTime: TextView? = null
 
 
-    private val requestPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            if (isGranted) {
-
+    private val requestMultiplePermissionsLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val allGranted = permissions.entries.all { it.value }
+            if (allGranted) {
+                Toast.makeText(this, "Todos los permisos necesarios han sido concedidos.", Toast.LENGTH_SHORT).show()
                 startMonitoringService()
             } else {
-                Toast.makeText(this, "El permiso de notificaciones es necesario para las alertas.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Algunos permisos son necesarios para el funcionamiento completo de la app.", Toast.LENGTH_LONG).show()
             }
         }
 
@@ -124,31 +125,27 @@ class HomeActivity : AppCompatActivity() {
             requestUsageStatsPermission()
             return
         }
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
             requestOverlayPermission()
             return
         }
 
+        val requiredPermissions = mutableListOf<String>()
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            when {
-                ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) == PackageManager.PERMISSION_GRANTED -> {
+            requiredPermissions.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
 
-                    startMonitoringService()
-                }
-                shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            requiredPermissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
 
-                    Toast.makeText(this, "Las notificaciones son necesarias para recibir alertas de uso.", Toast.LENGTH_LONG).show()
-                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }
-                else -> {
+        val missingPermissions = requiredPermissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
 
-                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }
-            }
+        if (missingPermissions.isNotEmpty()) {
+            requestMultiplePermissionsLauncher.launch(missingPermissions.toTypedArray())
         } else {
 
             startMonitoringService()

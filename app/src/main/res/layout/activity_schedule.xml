@@ -191,7 +191,7 @@
                         android:layout_height="48dp"
                         android:layout_gravity="center_horizontal"
                         android:layout_marginTop="20dp"
-                        android:backgroundTint="#1877F2"
+                        android:backgroundTint="@color/button_color_selector"
                         android:paddingHorizontal="32dp"
                         android:text="Editar"
                         android:textAllCaps="false"

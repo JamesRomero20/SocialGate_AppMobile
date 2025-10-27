@@ -16,6 +16,8 @@
         android:orientation="vertical"
         android:paddingTop="32dp"
         android:paddingBottom="32dp"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -146,7 +148,8 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_horizontal"
                         android:layout_marginTop="16dp"
-                        android:backgroundTint="#1877F2"
+                        android:backgroundTint="@color/button_color_selector"
+                        android:textColor="#ffffffff"
                         android:text="Guardar Datos"/>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>

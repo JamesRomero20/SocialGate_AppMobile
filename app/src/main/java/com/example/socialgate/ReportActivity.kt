@@ -14,10 +14,6 @@ import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import java.text.SimpleDateFormat
 import java.util.*
-import androidx.activity.result.contract.ActivityResultContracts
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
 import android.content.ContentValues
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -69,17 +65,6 @@ class ReportActivity : AppCompatActivity() {
     private var averageHoursData: Double = 0.0
     private val dailyUsageData = FloatArray(7)
 
-    private val requestPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            if (isGranted) {
-                Toast.makeText(this, "Permiso concedido. Generando PDF...", Toast.LENGTH_SHORT).show()
-                createPdf()
-            } else {
-                Toast.makeText(this, "Permiso denegado. No se puede guardar el reporte.", Toast.LENGTH_LONG).show()
-            }
-        }
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_report)
@@ -102,7 +87,11 @@ class ReportActivity : AppCompatActivity() {
             }
 
             findViewById<Button>(R.id.btnGenerarReporte).setOnClickListener {
-                generatePdf()
+                if (totalHoursData > 0.0) {
+                    generatePdf()
+                } else {
+                    Toast.makeText(this, "No hay datos de actividad y control de tiempo para generar un reporte.", Toast.LENGTH_SHORT).show()
+                }
             }
 
             setupBottomNavigation()
@@ -319,25 +308,8 @@ class ReportActivity : AppCompatActivity() {
 
         barChart?.invalidate()
     }
-
     private fun generatePdf() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            createPdf()
-        } else {
-
-            when {
-                ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                ) == PackageManager.PERMISSION_GRANTED -> {
-                    createPdf()
-                }
-                else -> {
-
-                    requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                }
-            }
-        }
+        createPdf()
     }
 
     private fun createPdf() {
@@ -358,7 +330,6 @@ class ReportActivity : AppCompatActivity() {
                     val pdfDocument = PdfDocument(writer)
                     val document = Document(pdfDocument)
 
-
                     val logoDrawable = ContextCompat.getDrawable(this, R.drawable.logosocial)
                     if (logoDrawable is BitmapDrawable) {
                         val bitmap = logoDrawable.bitmap
@@ -375,8 +346,6 @@ class ReportActivity : AppCompatActivity() {
                             .setTextAlignment(TextAlignment.CENTER)
                             .setMarginBottom(15f))
                     }
-
-
 
                     document.add(Paragraph("Reporte de Actividad - SocialGate")
                         .setBold()
@@ -440,8 +409,6 @@ class ReportActivity : AppCompatActivity() {
             }
         }
     }
-
-
 
     private fun getChartBitmap(chart: BarChart): Bitmap {
         chart.isDrawingCacheEnabled = true

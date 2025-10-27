@@ -15,16 +15,23 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import android.util.Patterns
+import android.text.Editable
+import android.text.TextWatcher
 
 class ManageActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: SocialDatabaseHelper
     private var userId: Int = -1
 
+    private var btnGuardarDatos: Button? = null
     private var etUsername: EditText? = null
     private var etName: EditText? = null
     private var etEmail: EditText? = null
     private var etPassword: EditText? = null
+
+    private var originalUsername: String = ""
+    private var originalName: String = ""
+    private var originalEmail: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,10 +55,16 @@ class ManageActivity : AppCompatActivity() {
             etName = findViewById(R.id.etName)
             etEmail = findViewById(R.id.etEmail)
             etPassword = findViewById(R.id.etPassword)
+            btnGuardarDatos = findViewById(R.id.btnGuardarDatos)
+            btnGuardarDatos?.isEnabled = false
 
             loadUserData()
-
+            setupTextWatchers()
             setupBottomNavigation()
+
+            btnGuardarDatos?.setOnClickListener {
+                updateUserData()
+            }
 
             findViewById<Button>(R.id.btnGuardarDatos).setOnClickListener {
                 updateUserData()
@@ -72,6 +85,7 @@ class ManageActivity : AppCompatActivity() {
         super.onResume()
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNav.selectedItemId = R.id.nav_gestionar
+        findViewById<android.view.View>(R.id.header_layout).requestFocus()
     }
 
     private fun setupBottomNavigation() {
@@ -110,9 +124,15 @@ class ManageActivity : AppCompatActivity() {
                 arrayOf(userId.toString()), null, null, null
             )
             if (cursor != null && cursor.moveToFirst()) {
-                etUsername?.setText(cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_USUARIO)))
-                etName?.setText(cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_NOMBRE)))
-                etEmail?.setText(cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_EMAIL)))
+                val usernameFromDb = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_USUARIO))
+                val nameFromDb = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_NOMBRE))
+                val emailFromDb = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_EMAIL))
+                etUsername?.setText(usernameFromDb)
+                etName?.setText(nameFromDb)
+                etEmail?.setText(emailFromDb)
+                originalUsername = usernameFromDb
+                originalName = nameFromDb
+                originalEmail = emailFromDb
             }
         } catch (e: SQLiteException) {
             Log.e("ManageActivity", "Error de base de datos al cargar datos del usuario", e)
@@ -182,8 +202,13 @@ class ManageActivity : AppCompatActivity() {
 
             if (rowsAffected > 0) {
                 Toast.makeText(this, "Datos actualizados correctamente", Toast.LENGTH_SHORT).show()
+                originalUsername = username
+                originalName = name
+                originalEmail = email
+                etPassword?.text?.clear()
+                btnGuardarDatos?.isEnabled = false
             } else {
-                Toast.makeText(this, "Error al actualizar los datos", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "No se realizaron cambios o hubo un error.", Toast.LENGTH_SHORT).show()
             }
         } catch (e: SQLiteException) {
             Log.e("ManageActivity", "Error de base de datos al actualizar datos", e)
@@ -251,6 +276,35 @@ class ManageActivity : AppCompatActivity() {
         }
 
         return true
+    }
+
+    private fun setupTextWatchers() {
+        val textWatcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                checkForChanges()
+            }
+        }
+
+        etUsername?.addTextChangedListener(textWatcher)
+        etName?.addTextChangedListener(textWatcher)
+        etEmail?.addTextChangedListener(textWatcher)
+        etPassword?.addTextChangedListener(textWatcher)
+    }
+
+    private fun checkForChanges() {
+        val currentUsername = etUsername?.text.toString().trim()
+        val currentName = etName?.text.toString().trim()
+        val currentEmail = etEmail?.text.toString().trim()
+        val currentPassword = etPassword?.text.toString().trim()
+
+        val hasChanged = currentUsername != originalUsername ||
+                currentName != originalName ||
+                currentEmail != originalEmail ||
+                currentPassword.isNotEmpty()
+
+        btnGuardarDatos?.isEnabled = hasChanged
     }
 
     private fun logout() {

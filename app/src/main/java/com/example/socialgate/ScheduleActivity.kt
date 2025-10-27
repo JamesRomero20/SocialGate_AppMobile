@@ -30,6 +30,8 @@ class ScheduleActivity : AppCompatActivity() {
     private lateinit var dbHelper: SocialDatabaseHelper
     private var userId: Int = -1
 
+    private var btnEditarHorario: Button? = null
+
     private var switchLimiteTiempo: com.google.android.material.switchmaterial.SwitchMaterial? = null
 
     private var switchHorario: com.google.android.material.switchmaterial.SwitchMaterial? = null
@@ -90,6 +92,7 @@ class ScheduleActivity : AppCompatActivity() {
         )
         switchLimiteTiempo = findViewById(R.id.switchLimiteTiempo)
         switchHorario = findViewById(R.id.switchHorario)
+        btnEditarHorario = findViewById(R.id.btnEditarHorario)
     }
 
     private fun updateHorarioActivo(isActive: Boolean) {
@@ -159,11 +162,12 @@ class ScheduleActivity : AppCompatActivity() {
 
         switchHorario?.setOnCheckedChangeListener { _, isChecked ->
             updateHorarioActivo(isChecked)
-            findViewById<Button>(R.id.btnEditarHorario).isEnabled = isChecked
+            btnEditarHorario?.isEnabled = isChecked
             dayTextViews?.values?.forEach { it.isEnabled = isChecked }
             val message = if (isChecked) "Horario académico activado" else "Horario académico desactivado"
             Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         }
+
     }
 
     private fun setupBottomNavigation() {
@@ -285,7 +289,7 @@ class ScheduleActivity : AppCompatActivity() {
             }
 
             switchHorario?.isChecked = isHorarioActive
-            findViewById<Button>(R.id.btnEditarHorario).isEnabled = isHorarioActive
+            btnEditarHorario?.isEnabled = isHorarioActive
             dayTextViews?.values?.forEach { it.isEnabled = isHorarioActive }
 
         } catch (e: Exception) {
