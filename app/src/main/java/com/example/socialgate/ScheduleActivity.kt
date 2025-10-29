@@ -95,6 +95,13 @@ class ScheduleActivity : AppCompatActivity() {
         btnEditarHorario = findViewById(R.id.btnEditarHorario)
     }
 
+    private fun resetAcademicScheduleUI() {
+        findViewById<TextView>(R.id.tvHorario)?.text = "00:00 - 00:00"
+        selectedDays.clear()
+        dayTextViews?.values?.forEach { textView ->
+            updateDayView(textView, false)
+        }
+    }
     private fun updateHorarioActivo(isActive: Boolean) {
         var db: SQLiteDatabase? = null
         try {
@@ -164,6 +171,12 @@ class ScheduleActivity : AppCompatActivity() {
             updateHorarioActivo(isChecked)
             btnEditarHorario?.isEnabled = isChecked
             dayTextViews?.values?.forEach { it.isEnabled = isChecked }
+            if (isChecked) {
+                Toast.makeText(this, "Horario académico activado", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Horario académico desactivado", Toast.LENGTH_SHORT).show()
+                resetAcademicScheduleUI()
+            }
             val message = if (isChecked) "Horario académico activado" else "Horario académico desactivado"
             Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         }
