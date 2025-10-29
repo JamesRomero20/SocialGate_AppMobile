@@ -422,7 +422,8 @@ class ScheduleActivity : AppCompatActivity() {
                     switchLimiteTiempo?.isChecked = true
                     sliderTiempo?.isEnabled = true
                     val hours = limitInMinutes / 60f
-                    sliderTiempo?.value = hours
+                    val roundedHours = (Math.round(hours * 100) / 100.0f)
+                    sliderTiempo?.value = roundedHours
                 }
             } else {
                 switchLimiteTiempo?.isChecked = false
