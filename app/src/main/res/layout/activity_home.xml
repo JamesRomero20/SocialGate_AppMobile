@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".view.activity.MainActivity">
 
     <LinearLayout
         android:id="@+id/header_layout"
@@ -66,7 +66,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:text="Juan Perez"
+                android:text="---------"
                 android:textSize="24sp"
                 android:textStyle="bold" />
 
@@ -83,7 +83,7 @@
                     android:id="@+id/tvTiempoHoy"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="3.2 H"
+                    android:text="0h 0m"
                     android:textColor="@android:color/holo_blue_dark"
                     android:textSize="28sp"
                     android:textStyle="bold" />
@@ -102,7 +102,7 @@
                 android:layout_marginTop="16dp"
                 android:background="@android:color/holo_orange_light"
                 android:padding="8dp"
-                android:text="Límite establecido: 5 horas"
+                android:text="Límite establecido: 0h 0m"
                 android:textColor="@android:color/black" />
 
             <LinearLayout

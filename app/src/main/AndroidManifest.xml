@@ -34,34 +34,34 @@
         android:theme="@style/Theme.SocialGate">
 
         <service
-            android:name=".AppUsageMonitorService"
+            android:name=".service.AppUsageMonitorService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
         <activity
-            android:name=".ManageActivity"
+            android:name=".view.activity.ManageActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize"/>
 
         <activity
-            android:name=".ReportActivity"
+            android:name=".view.activity.ReportActivity"
             android:exported="false" />
 
         <activity
-            android:name=".ScheduleActivity"
+            android:name=".view.activity.ScheduleActivity"
             android:exported="false" />
 
         <activity
-            android:name=".HomeActivity"
+            android:name=".view.activity.HomeActivity"
             android:exported="false" />
 
         <activity
-            android:name=".RegisterActivity"
+            android:name=".view.activity.RegisterActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize"/>
 
         <activity
-            android:name=".MainActivity"
+            android:name=".view.activity.MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>

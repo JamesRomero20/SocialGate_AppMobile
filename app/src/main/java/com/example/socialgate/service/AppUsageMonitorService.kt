@@ -1,14 +1,16 @@
-package com.example.socialgate
+package com.example.socialgate.service
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import androidx.core.app.NotificationManagerCompat
+import android.app.PendingIntent
 import android.app.Service
 import android.app.usage.UsageStatsManager
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.os.Build
@@ -17,18 +19,19 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import android.Manifest
-import android.database.Cursor
+import com.example.socialgate.view.activity.HomeActivity
+import com.example.socialgate.R
+import com.example.socialgate.model.SocialDatabaseHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import android.app.PendingIntent
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import java.util.Calendar
 
 class AppUsageMonitorService : Service() {
 
@@ -49,7 +52,11 @@ class AppUsageMonitorService : Service() {
         val notificationId = 2
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, "Alertas de Uso", NotificationManager.IMPORTANCE_HIGH)
+            val channel = NotificationChannel(
+                channelId,
+                "Alertas de Uso",
+                NotificationManager.IMPORTANCE_HIGH
+            )
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)
         }
@@ -75,7 +82,11 @@ class AppUsageMonitorService : Service() {
         val notificationId = 3
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, "Alertas de Bloqueo", NotificationManager.IMPORTANCE_HIGH)
+            val channel = NotificationChannel(
+                channelId,
+                "Alertas de Bloqueo",
+                NotificationManager.IMPORTANCE_HIGH
+            )
             channel.description = "Notificaciones para cuando el tiempo de uso se ha agotado."
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)
@@ -127,17 +138,23 @@ class AppUsageMonitorService : Service() {
             try {
                 db = dbHelper.readableDatabase
                 cursor = db.query(
-                    SocialDatabaseHelper.TABLE_CONTROL_TIEMPO,
-                    arrayOf(SocialDatabaseHelper.KEY_TIEMPO_USADO, SocialDatabaseHelper.KEY_TIEMPO_LIMITE),
-                    "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ? AND ${SocialDatabaseHelper.KEY_RED_SOCIAL_CONTROL} = ?",
+                    SocialDatabaseHelper.Companion.TABLE_CONTROL_TIEMPO,
+                    arrayOf(
+                        SocialDatabaseHelper.Companion.KEY_TIEMPO_USADO,
+                        SocialDatabaseHelper.Companion.KEY_TIEMPO_LIMITE
+                    ),
+                    "${SocialDatabaseHelper.Companion.KEY_ID_USUARIO_FK} = ? AND ${SocialDatabaseHelper.Companion.KEY_RED_SOCIAL_CONTROL} = ?",
                     arrayOf(userId.toString(), socialNetworkName), null, null, null
                 )
 
                 if (cursor != null && cursor.moveToFirst()) {
-                    val tiempoUsadoGuardado = cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_TIEMPO_USADO))
-                    val tiempoLimite = cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_TIEMPO_LIMITE))
+                    val tiempoUsadoGuardado =
+                        cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.Companion.KEY_TIEMPO_USADO))
+                    val tiempoLimite =
+                        cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.Companion.KEY_TIEMPO_LIMITE))
 
-                    val tiempoSesionActualMinutos = if (startTime > 0) ((System.currentTimeMillis() - startTime) / 60000).toInt() else 0
+                    val tiempoSesionActualMinutos =
+                        if (startTime > 0) ((System.currentTimeMillis() - startTime) / 60000).toInt() else 0
 
                     if (tiempoLimite > 0 && (tiempoUsadoGuardado + tiempoSesionActualMinutos >= tiempoLimite)) {
                         limiteExcedido = true
@@ -157,7 +174,11 @@ class AppUsageMonitorService : Service() {
         val notificationId = 4
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, "Alertas de Horario Académico", NotificationManager.IMPORTANCE_HIGH)
+            val channel = NotificationChannel(
+                channelId,
+                "Alertas de Horario Académico",
+                NotificationManager.IMPORTANCE_HIGH
+            )
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }
 
@@ -193,20 +214,26 @@ class AppUsageMonitorService : Service() {
                     Calendar.SUNDAY -> "Domingo"
                     else -> ""
                 }
-                val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(calendar.time)
+                val currentTime =
+                    SimpleDateFormat("HH:mm", Locale.getDefault()).format(calendar.time)
 
                 db = dbHelper.readableDatabase
                 cursor = db.query(
-                    SocialDatabaseHelper.TABLE_HORARIO_BLOQUEO,
-                    arrayOf(SocialDatabaseHelper.KEY_HORA_INICIO, SocialDatabaseHelper.KEY_HORA_FIN),
-                    "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ? AND ${SocialDatabaseHelper.KEY_DIA_SEMANA} = ? AND ${SocialDatabaseHelper.KEY_HORARIO_ACTIVO} = 1",
+                    SocialDatabaseHelper.Companion.TABLE_HORARIO_BLOQUEO,
+                    arrayOf(
+                        SocialDatabaseHelper.Companion.KEY_HORA_INICIO,
+                        SocialDatabaseHelper.Companion.KEY_HORA_FIN
+                    ),
+                    "${SocialDatabaseHelper.Companion.KEY_ID_USUARIO_FK} = ? AND ${SocialDatabaseHelper.Companion.KEY_DIA_SEMANA} = ? AND ${SocialDatabaseHelper.Companion.KEY_HORARIO_ACTIVO} = 1",
                     arrayOf(userId.toString(), dayOfWeekStr),
                     null, null, null
                 )
 
                 if (cursor != null && cursor.moveToFirst()) {
-                    val startTime = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_HORA_INICIO))
-                    val endTime = cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_HORA_FIN))
+                    val startTime =
+                        cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.Companion.KEY_HORA_INICIO))
+                    val endTime =
+                        cursor.getString(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.Companion.KEY_HORA_FIN))
 
                     if (currentTime >= startTime && currentTime < endTime) {
                         isBlocked = true
@@ -346,13 +373,13 @@ class AppUsageMonitorService : Service() {
         var db: SQLiteDatabase? = null
         try {
             db = dbHelper.writableDatabase
-            val columns = arrayOf(SocialDatabaseHelper.KEY_TIEMPO_USADO)
+            val columns = arrayOf(SocialDatabaseHelper.Companion.KEY_TIEMPO_USADO)
             val selection =
-                "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ? AND ${SocialDatabaseHelper.KEY_RED_SOCIAL_CONTROL} = ?"
+                "${SocialDatabaseHelper.Companion.KEY_ID_USUARIO_FK} = ? AND ${SocialDatabaseHelper.Companion.KEY_RED_SOCIAL_CONTROL} = ?"
             val selectionArgs = arrayOf(userId.toString(), socialNetworkName)
 
             val cursor = db.query(
-                SocialDatabaseHelper.TABLE_CONTROL_TIEMPO,
+                SocialDatabaseHelper.Companion.TABLE_CONTROL_TIEMPO,
                 columns,
                 selection,
                 selectionArgs,
@@ -362,19 +389,19 @@ class AppUsageMonitorService : Service() {
             var currentMinutes = 0
             if (cursor.moveToFirst()) {
                 currentMinutes =
-                    cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.KEY_TIEMPO_USADO))
+                    cursor.getInt(cursor.getColumnIndexOrThrow(SocialDatabaseHelper.Companion.KEY_TIEMPO_USADO))
             }
             cursor.close()
 
             val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
             val activityValues = ContentValues().apply {
-                put(SocialDatabaseHelper.KEY_ID_USUARIO_FK, userId)
-                put(SocialDatabaseHelper.KEY_RED_SOCIAL_ACTIVIDAD, socialNetworkName)
-                put(SocialDatabaseHelper.KEY_FECHA_HORA, sdf.format(Date()))
-                put(SocialDatabaseHelper.KEY_DURACION, durationSeconds.toInt())
-                put(SocialDatabaseHelper.KEY_DESCRIPCION, "Uso de la aplicación.")
+                put(SocialDatabaseHelper.Companion.KEY_ID_USUARIO_FK, userId)
+                put(SocialDatabaseHelper.Companion.KEY_RED_SOCIAL_ACTIVIDAD, socialNetworkName)
+                put(SocialDatabaseHelper.Companion.KEY_FECHA_HORA, sdf.format(Date()))
+                put(SocialDatabaseHelper.Companion.KEY_DURACION, durationSeconds.toInt())
+                put(SocialDatabaseHelper.Companion.KEY_DESCRIPCION, "Uso de la aplicación.")
             }
-            db.insert(SocialDatabaseHelper.TABLE_ACTIVIDAD, null, activityValues)
+            db.insert(SocialDatabaseHelper.Companion.TABLE_ACTIVIDAD, null, activityValues)
 
             val newDurationMinutes = (durationSeconds / 60).toInt()
             if (newDurationMinutes < 1) {
@@ -384,10 +411,10 @@ class AppUsageMonitorService : Service() {
 
             val newTotalMinutes = currentMinutes + newDurationMinutes
             val values = ContentValues().apply {
-                put(SocialDatabaseHelper.KEY_TIEMPO_USADO, newTotalMinutes)
+                put(SocialDatabaseHelper.Companion.KEY_TIEMPO_USADO, newTotalMinutes)
             }
 
-            db.update(SocialDatabaseHelper.TABLE_CONTROL_TIEMPO, values, selection, selectionArgs)
+            db.update(SocialDatabaseHelper.Companion.TABLE_CONTROL_TIEMPO, values, selection, selectionArgs)
             Log.d("AppMonitor", "Tiempo actualizado para $socialNetworkName: $newTotalMinutes minutos.")
 
         }catch (e: SQLiteException) {
@@ -403,7 +430,7 @@ class AppUsageMonitorService : Service() {
         try {
 
             val usageStatsManager =
-                getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+                getSystemService(USAGE_STATS_SERVICE) as UsageStatsManager
             val time = System.currentTimeMillis()
             val stats = usageStatsManager.queryUsageStats(
                 UsageStatsManager.INTERVAL_DAILY,
@@ -421,7 +448,11 @@ class AppUsageMonitorService : Service() {
     }
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel("USAGE_MONITOR_CHANNEL", "Monitor de Uso", NotificationManager.IMPORTANCE_LOW)
+            val channel = NotificationChannel(
+                "USAGE_MONITOR_CHANNEL",
+                "Monitor de Uso",
+                NotificationManager.IMPORTANCE_LOW
+            )
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)
         }

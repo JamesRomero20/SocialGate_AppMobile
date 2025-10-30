@@ -1,4 +1,4 @@
-package com.example.socialgate
+package com.example.socialgate.model
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
