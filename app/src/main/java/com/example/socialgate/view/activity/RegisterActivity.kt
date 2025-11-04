@@ -5,6 +5,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import android.widget.ImageButton
 import com.example.socialgate.R
 import com.example.socialgate.model.SocialDatabaseHelper
 import com.example.socialgate.view.view_interfaces.RegisterView
@@ -27,6 +28,11 @@ class RegisterActivity : AppCompatActivity(), RegisterView {
         val editTextPassword = findViewById<EditText>(R.id.editTextPasswordName)
         val editTextConfirmPassword = findViewById<EditText>(R.id.editTextPassword)
         val registerButton = findViewById<Button>(R.id.button2)
+
+        val btnBackToLogin = findViewById<ImageButton>(R.id.btnBackToLogin)
+        btnBackToLogin.setOnClickListener {
+            finish()
+        }
 
         registerButton.setOnClickListener {
             controller.registerUser(

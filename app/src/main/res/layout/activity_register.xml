@@ -20,6 +20,21 @@
             android:layout_height="wrap_content"
             android:paddingBottom="32dp">
 
+            <ImageButton
+                android:id="@+id/btnBackToLogin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:src="@drawable/ic_arrow_back"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Regresar al login"
+                android:padding="24dp"
+                app:tint="@android:color/white"
+                android:elevation="4dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
             <ImageView
                 android:id="@+id/imageView3"
                 android:layout_width="match_parent"

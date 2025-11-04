@@ -15,7 +15,6 @@ class SocialDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
         const val KEY_ID_HORARIO = "id_horario_pk"
         const val TABLE_CONTROL_TIEMPO = "control_tiempo"
         const val TABLE_REPORTE = "reporte"
-        const val TABLE_NOTIFICACION = "notificacion"
         const val KEY_DIA_SEMANA = "dia_semana"
         const val KEY_HORA_INICIO = "hora_inicio"
         const val KEY_HORA_FIN = "hora_fin"
@@ -42,11 +41,6 @@ class SocialDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
         const val KEY_FECHA_GENERACION = "fecha_generacion"
         const val KEY_TIPO_REPORTE = "tipo_reporte"
         const val KEY_CONTENIDO = "contenido"
-        const val KEY_ID_NOTIFICACION = "id_notificacion_pk"
-        const val KEY_TIPO_NOTIFICACION = "tipo"
-        const val KEY_MENSAJE = "mensaje"
-        const val KEY_FECHA_ENVIO = "fecha_envio"
-        const val KEY_ESTADO_NOTIFICACION = "estado"
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
@@ -90,15 +84,6 @@ class SocialDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
                 + "FOREIGN KEY(" + KEY_ID_USUARIO_FK + ") REFERENCES " + TABLE_USUARIO + "(" + KEY_ID_USUARIO + ")" + ")")
         db?.execSQL(createReporteTable)
 
-        val createNotificacionTable = ("CREATE TABLE " + TABLE_NOTIFICACION + "("
-                + KEY_ID_NOTIFICACION + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                + KEY_ID_USUARIO_FK + " INTEGER,"
-                + KEY_TIPO_NOTIFICACION + " TEXT,"
-                + KEY_MENSAJE + " TEXT,"
-                + KEY_FECHA_ENVIO + " TEXT,"
-                + KEY_ESTADO_NOTIFICACION + " TEXT,"
-                + "FOREIGN KEY(" + KEY_ID_USUARIO_FK + ") REFERENCES " + TABLE_USUARIO + "(" + KEY_ID_USUARIO + ")" + ")")
-        db?.execSQL(createNotificacionTable)
 
         val createHorarioBloqueoTable = ("CREATE TABLE " + TABLE_HORARIO_BLOQUEO + "("
                 + KEY_ID_HORARIO + " INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -113,7 +98,6 @@ class SocialDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
 
-        db?.execSQL("DROP TABLE IF EXISTS " + TABLE_NOTIFICACION)
         db?.execSQL("DROP TABLE IF EXISTS " + TABLE_REPORTE)
         db?.execSQL("DROP TABLE IF EXISTS " + TABLE_CONTROL_TIEMPO)
         db?.execSQL("DROP TABLE IF EXISTS " + TABLE_ACTIVIDAD)
