@@ -1,4 +1,4 @@
-package com.example.socialgate
+package com.example.unitTest
 
 import org.junit.Test
 
