@@ -40,6 +40,11 @@ class RegisterController(private val view: RegisterView, dbHelper: SocialDatabas
             UserExistsResult.NONE -> { /* Continuar */ }
         }
 
+        if (userRepository.checkPasswordExists(password)) {
+            view.showValidationError("La contraseña ya está en uso. Por favor, ingrese otra.")
+            return
+        }
+
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         val currentDate = sdf.format(Date())
         val newRowId = userRepository.createUser(username, "$name $subname", email, password, currentDate)
@@ -51,6 +56,7 @@ class RegisterController(private val view: RegisterView, dbHelper: SocialDatabas
             view.onRegistrationFailure()
         }
     }
+
     private fun validateInputs(username: String, name: String, subname: String, email: String, password: String): Boolean {
         if (!username.matches("^[a-zA-Z0-9]+$".toRegex()) || username.length > 15) {
             view.showValidationError("El nombre de usuario solo puede contener letras y números, y no debe exceder los 15 caracteres.")

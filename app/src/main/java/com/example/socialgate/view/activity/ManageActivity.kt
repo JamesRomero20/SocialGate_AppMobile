@@ -90,8 +90,12 @@ class ManageActivity : AppCompatActivity(), ManageView {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
-    override fun showUserExistsError() {
-        Toast.makeText(this, "El usuario o correo ya está en uso por otra cuenta.", Toast.LENGTH_LONG).show()
+    override fun showUsernameTakenError() {
+        Toast.makeText(this, "Ese nombre de usuario ya está en uso.", Toast.LENGTH_LONG).show()
+    }
+
+    override fun showEmailTakenError() {
+        Toast.makeText(this, "Ese correo electrónico ya está en uso.", Toast.LENGTH_LONG).show()
     }
 
     override fun navigateToLogin() {

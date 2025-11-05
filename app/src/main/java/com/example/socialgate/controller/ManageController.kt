@@ -32,13 +32,26 @@ class ManageController(
             view.showValidationError("Usuario, nombre y correo no pueden estar vacíos.")
             return
         }
+
         if (!isValid(username, name, email, password)) {
             return
         }
 
-        if (userRepository.isUsernameOrEmailTaken(username, email, userId)) {
-            view.showUserExistsError()
+        if (userRepository.isUsernameTaken(username, userId)) {
+            view.showUsernameTakenError()
             return
+        }
+
+        if (userRepository.isEmailTaken(email, userId)) {
+            view.showEmailTakenError()
+            return
+        }
+
+        if (password.isNotEmpty()) {
+            if (userRepository.checkPasswordExists(password)) {
+                view.showValidationError("La contraseña ya está en uso. Por favor, ingrese otra.")
+                return
+            }
         }
 
         val rowsAffected = userRepository.updateUser(userId, username, name, email, password)

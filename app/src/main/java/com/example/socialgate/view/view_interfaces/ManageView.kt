@@ -7,6 +7,7 @@ interface ManageView {
     fun showUpdateSuccess()
     fun showUpdateFailure()
     fun showValidationError(message: String)
-    fun showUserExistsError()
+    fun showUsernameTakenError()
+    fun showEmailTakenError()
     fun navigateToLogin()
 }
