@@ -1,5 +1,6 @@
 package com.example.socialgate.view.activity
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -10,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.socialgate.R
 import com.example.socialgate.controller.LoginController
 import com.example.socialgate.model.SocialDatabaseHelper
+import com.example.socialgate.model.UserRepository
 import com.example.socialgate.view.view_interfaces.LoginView
 
 class MainActivity : AppCompatActivity(), LoginView {
@@ -22,7 +24,8 @@ class MainActivity : AppCompatActivity(), LoginView {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
         dbHelper = SocialDatabaseHelper(this)
-        controller = LoginController(this, dbHelper)
+        val userRepository = UserRepository(dbHelper)
+        controller = LoginController(this, userRepository, applicationContext)
         userInputEditText = findViewById(R.id.editTextPersonName)
         passwordEditText = findViewById(R.id.editTextPasswordName)
         val loginButton = findViewById<Button>(R.id.btnIngresar)
@@ -40,6 +43,15 @@ class MainActivity : AppCompatActivity(), LoginView {
             val intent = Intent(this, RegisterActivity::class.java)
             startActivity(intent)
         }
+    }
+
+    override fun navigateToPermissions(userId: Int) {
+        Toast.makeText(this, "Redirigiendo para conceder permisos...", Toast.LENGTH_LONG).show()
+
+        val prefs = getSharedPreferences(LoginController.PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putBoolean(LoginController.KEY_PERMISSIONS_GRANTED, true).apply()
+
+        onLoginSuccess("Usuario", userId)
     }
 
     override fun onLoginSuccess(userName: String, userId: Int) {

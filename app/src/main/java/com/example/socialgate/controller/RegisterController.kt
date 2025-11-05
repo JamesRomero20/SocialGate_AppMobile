@@ -1,7 +1,6 @@
 package com.example.socialgate.controller
 
 import android.util.Patterns
-import com.example.socialgate.model.SocialDatabaseHelper
 import com.example.socialgate.model.TimeControlRepository
 import com.example.socialgate.model.UserExistsResult
 import com.example.socialgate.model.UserRepository
@@ -10,10 +9,11 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class RegisterController(private val view: RegisterView, dbHelper: SocialDatabaseHelper) {
-
-    private val userRepository = UserRepository(dbHelper)
-    private val timeControlRepository = TimeControlRepository(dbHelper)
+class RegisterController(
+    private val view: RegisterView,
+    private val userRepository: UserRepository,
+    private val timeControlRepository: TimeControlRepository
+) {
 
     fun registerUser(username: String, name: String, subname: String, email: String, password: String, confirmPass: String) {
         if (username.isEmpty() || name.isEmpty() || subname.isEmpty() || email.isEmpty() || password.isEmpty()) {
@@ -51,12 +51,17 @@ class RegisterController(private val view: RegisterView, dbHelper: SocialDatabas
             view.onRegistrationFailure()
         }
     }
+
+    private fun isEmailValid(email: String): Boolean {
+        val emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$".toRegex()
+        return emailRegex.matches(email)
+    }
     private fun validateInputs(username: String, name: String, subname: String, email: String, password: String): Boolean {
         if (!username.matches("^[a-zA-Z0-9]+$".toRegex()) || username.length > 15) {
             view.showValidationError("El nombre de usuario solo puede contener letras y números, y no debe exceder los 15 caracteres.")
             return false
         }
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        if (!isEmailValid(email)) {
             view.showValidationError("Por favor, ingrese un correo electrónico válido.")
             return false
         }

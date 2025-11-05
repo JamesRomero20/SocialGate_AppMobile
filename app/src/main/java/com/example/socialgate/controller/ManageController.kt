@@ -2,9 +2,7 @@ package com.example.socialgate.controller
 
 import android.content.Context
 import android.content.Intent
-import android.util.Patterns
 import com.example.socialgate.model.ScheduleRepository
-import com.example.socialgate.model.SocialDatabaseHelper
 import com.example.socialgate.model.UserRepository
 import com.example.socialgate.service.AppUsageMonitorService
 import com.example.socialgate.view.view_interfaces.ManageView
@@ -13,11 +11,9 @@ class ManageController(
     private val view: ManageView,
     private val userId: Int,
     private val context: Context,
-    dbHelper: SocialDatabaseHelper
+    private val userRepository: UserRepository,
+    private val scheduleRepository: ScheduleRepository
 ) {
-    private val userRepository = UserRepository(dbHelper)
-    private val scheduleRepository = ScheduleRepository(dbHelper)
-
     fun loadInitialData() {
         val user = userRepository.findUserById(userId)
         if (user != null) {
@@ -36,10 +32,23 @@ class ManageController(
             return
         }
 
-        if (userRepository.isUsernameOrEmailTaken(username, email, userId)) {
-            view.showUserExistsError()
+        if (userRepository.isUsernameTaken(username, userId)) {
+            view.showUsernameTakenError()
             return
         }
+
+        if (userRepository.isEmailTaken(email, userId)) {
+            view.showEmailTakenError()
+            return
+        }
+
+        if (password.isNotEmpty()) {
+            if (userRepository.checkPasswordExists(password)) {
+                view.showValidationError("La contraseña ya está en uso. Por favor, ingrese otra.")
+                return
+            }
+        }
+
 
         val rowsAffected = userRepository.updateUser(userId, username, name, email, password)
         if (rowsAffected > 0) {
@@ -55,12 +64,17 @@ class ManageController(
         view.navigateToLogin()
     }
 
+    private fun isEmailValid(email: String): Boolean {
+        val emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$".toRegex()
+        return emailRegex.matches(email)
+    }
+
     private fun isValid(username: String, name: String, email: String, password: String): Boolean {
         if (!username.matches("^[a-zA-Z0-9]+$".toRegex()) || username.length > 15) {
             view.showValidationError("El nombre de usuario solo puede contener letras, números y no debe exceder los 15 caracteres.")
             return false
         }
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        if (!isEmailValid(email)) {
             view.showValidationError("Por favor, ingrese un correo electrónico válido.")
             return false
         }

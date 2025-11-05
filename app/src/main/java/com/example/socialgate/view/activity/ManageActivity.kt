@@ -14,7 +14,9 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.socialgate.R
 import com.example.socialgate.model.SocialDatabaseHelper
 import com.example.socialgate.controller.ManageController
+import com.example.socialgate.model.ScheduleRepository
 import com.example.socialgate.model.User
+import com.example.socialgate.model.UserRepository
 import com.example.socialgate.view.view_interfaces.ManageView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
@@ -43,7 +45,9 @@ class ManageActivity : AppCompatActivity(), ManageView {
         }
 
         val dbHelper = SocialDatabaseHelper(this)
-        controller = ManageController(this, userId, applicationContext, dbHelper)
+        val userRepository = UserRepository(dbHelper)
+        val scheduleRepository = ScheduleRepository(dbHelper)
+        controller = ManageController(this, userId, applicationContext, userRepository, scheduleRepository)
         etUsername = findViewById(R.id.etUsername)
         etName = findViewById(R.id.etName)
         etEmail = findViewById(R.id.etEmail)
@@ -90,8 +94,12 @@ class ManageActivity : AppCompatActivity(), ManageView {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
-    override fun showUserExistsError() {
-        Toast.makeText(this, "El usuario o correo ya está en uso por otra cuenta.", Toast.LENGTH_LONG).show()
+    override fun showUsernameTakenError() {
+        Toast.makeText(this, "Ese nombre de usuario ya está en uso.", Toast.LENGTH_LONG).show()
+    }
+
+    override fun showEmailTakenError() {
+        Toast.makeText(this, "Ese correo electrónico ya está en uso.", Toast.LENGTH_LONG).show()
     }
 
     override fun navigateToLogin() {

@@ -10,6 +10,8 @@ import com.example.socialgate.R
 import com.example.socialgate.model.SocialDatabaseHelper
 import com.example.socialgate.view.view_interfaces.RegisterView
 import com.example.socialgate.controller.RegisterController
+import com.example.socialgate.model.TimeControlRepository
+import com.example.socialgate.model.UserRepository
 
 class RegisterActivity : AppCompatActivity(), RegisterView {
 
@@ -19,7 +21,9 @@ class RegisterActivity : AppCompatActivity(), RegisterView {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
         val dbHelper = SocialDatabaseHelper(this)
-        controller = RegisterController(this, dbHelper)
+        val userRepository = UserRepository(dbHelper)
+        val timeControlRepository = TimeControlRepository(dbHelper)
+        controller = RegisterController(this, userRepository, timeControlRepository)
 
         val editTextUsername = findViewById<EditText>(R.id.editTextPersonNameUser)
         val editTextName = findViewById<EditText>(R.id.editTextName)

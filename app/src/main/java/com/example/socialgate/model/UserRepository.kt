@@ -73,16 +73,37 @@ class UserRepository(private val dbHelper: SocialDatabaseHelper) {
         )
     }
 
-    fun isUsernameOrEmailTaken(username: String, email: String, currentUserId: Int): Boolean {
+    fun isUsernameTaken(username: String, currentUserId: Int): Boolean {
         val db = dbHelper.readableDatabase
         val query = "SELECT * FROM ${SocialDatabaseHelper.TABLE_USUARIO} WHERE " +
-                "(${SocialDatabaseHelper.KEY_USUARIO} = ? OR ${SocialDatabaseHelper.KEY_EMAIL} = ?) AND " +
-                "${SocialDatabaseHelper.KEY_ID_USUARIO} != ?"
-        val cursor = db.rawQuery(query, arrayOf(username, email, currentUserId.toString()))
+                "${SocialDatabaseHelper.KEY_USUARIO} = ? AND ${SocialDatabaseHelper.KEY_ID_USUARIO} != ?"
+        val cursor = db.rawQuery(query, arrayOf(username, currentUserId.toString()))
         val exists = cursor.moveToFirst()
         cursor.close()
         return exists
     }
+
+    fun isEmailTaken(email: String, currentUserId: Int): Boolean {
+        val db = dbHelper.readableDatabase
+        val query = "SELECT * FROM ${SocialDatabaseHelper.TABLE_USUARIO} WHERE " +
+                "${SocialDatabaseHelper.KEY_EMAIL} = ? AND ${SocialDatabaseHelper.KEY_ID_USUARIO} != ?"
+        val cursor = db.rawQuery(query, arrayOf(email, currentUserId.toString()))
+        val exists = cursor.moveToFirst()
+        cursor.close()
+        return exists
+    }
+
+    fun checkPasswordExists(password: String): Boolean {
+        val db = dbHelper.readableDatabase
+        val query = "SELECT * FROM ${SocialDatabaseHelper.TABLE_USUARIO} WHERE " +
+                "${SocialDatabaseHelper.KEY_CLAVE} = ?"
+        val cursor = db.rawQuery(query, arrayOf(password))
+
+        val exists = cursor.moveToFirst()
+        cursor.close()
+        return exists
+    }
+
 
     fun checkUserExists(username: String, email: String): UserExistsResult {
         val db = dbHelper.readableDatabase
@@ -114,4 +135,6 @@ class UserRepository(private val dbHelper: SocialDatabaseHelper) {
         }
         return db.insert(SocialDatabaseHelper.TABLE_USUARIO, null, values)
     }
+
+
 }

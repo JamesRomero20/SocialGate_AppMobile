@@ -17,6 +17,8 @@ import com.google.android.material.slider.Slider
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.example.socialgate.controller.ScheduleController
 import com.example.socialgate.model.ScheduleItem
+import com.example.socialgate.model.ScheduleRepository
+import com.example.socialgate.model.TimeControlRepository
 import com.example.socialgate.view.view_interfaces.ScheduleView
 import java.util.Calendar
 
@@ -48,7 +50,9 @@ class ScheduleActivity : AppCompatActivity(), ScheduleView {
         }
 
         val dbHelper = SocialDatabaseHelper(this)
-        controller = ScheduleController(this, userId, applicationContext, dbHelper)
+        val timeControlRepository = TimeControlRepository(dbHelper)
+        val scheduleRepository = ScheduleRepository(dbHelper)
+        controller = ScheduleController(this, userId, applicationContext, timeControlRepository, scheduleRepository)
         setupViews()
         setupListeners()
         setupBottomNavigation()

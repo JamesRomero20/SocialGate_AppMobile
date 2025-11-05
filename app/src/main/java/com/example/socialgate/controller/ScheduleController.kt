@@ -2,7 +2,6 @@ package com.example.socialgate.controller
 
 import android.content.Context
 import com.example.socialgate.model.ScheduleRepository
-import com.example.socialgate.model.SocialDatabaseHelper
 import com.example.socialgate.model.TimeControlRepository
 import com.example.socialgate.view.activity.ScheduleActivity
 import com.example.socialgate.view.view_interfaces.ScheduleView
@@ -12,10 +11,9 @@ class ScheduleController(
     private val view: ScheduleView,
     private val userId: Int,
     private val context: Context,
-    dbHelper: SocialDatabaseHelper
+    private val timeControlRepository: TimeControlRepository,
+    private val scheduleRepository: ScheduleRepository
 ) {
-    private val timeControlRepository = TimeControlRepository(dbHelper)
-    private val scheduleRepository = ScheduleRepository(dbHelper)
     private val selectedDays = mutableSetOf<String>()
     fun loadInitialData() {
         val limitInMinutes = timeControlRepository.getTimeLimit(userId)

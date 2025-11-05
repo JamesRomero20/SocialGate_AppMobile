@@ -16,6 +16,7 @@ import com.example.socialgate.R
 import com.example.socialgate.model.SocialDatabaseHelper
 import com.example.socialgate.controller.ReportController
 import com.example.socialgate.model.ReportData
+import com.example.socialgate.model.ReportRepository
 import com.example.socialgate.view.view_interfaces.ReportView
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.components.XAxis
@@ -35,6 +36,9 @@ import com.itextpdf.layout.element.Table
 import com.itextpdf.layout.property.HorizontalAlignment
 import com.itextpdf.layout.property.TextAlignment
 import com.itextpdf.layout.property.UnitValue
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -46,6 +50,8 @@ class ReportActivity : AppCompatActivity(), ReportView {
 
     private lateinit var controller: ReportController
     private var userId: Int = -1
+
+    private val activityScope = MainScope()
     private lateinit var tvTiempoTotal: TextView
     private lateinit var tvTiempoPromedio: TextView
     private lateinit var barChart: BarChart
@@ -60,7 +66,8 @@ class ReportActivity : AppCompatActivity(), ReportView {
             return
         }
         val dbHelper = SocialDatabaseHelper(this)
-        controller = ReportController(this, userId, dbHelper)
+        val repository = ReportRepository(dbHelper)
+        controller = ReportController(this, userId, repository)
         tvTiempoTotal = findViewById(R.id.tvTiempoTotal)
         tvTiempoPromedio = findViewById(R.id.tvTiempoPromedio)
         barChart = findViewById(R.id.barChart)
@@ -73,7 +80,9 @@ class ReportActivity : AppCompatActivity(), ReportView {
 
     override fun onResume() {
         super.onResume()
-        controller.startUpdating()
+        activityScope.launch {
+            controller.loadData()
+        }
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNav.selectedItemId = R.id.nav_reporte
 
@@ -81,7 +90,7 @@ class ReportActivity : AppCompatActivity(), ReportView {
 
     override fun onPause() {
         super.onPause()
-        controller.stopUpdating()
+        activityScope.cancel()
     }
 
     override fun displayReportData(data: ReportData) {
