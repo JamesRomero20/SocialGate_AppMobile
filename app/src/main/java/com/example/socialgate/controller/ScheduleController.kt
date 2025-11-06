@@ -5,7 +5,6 @@ import com.example.socialgate.model.ScheduleRepository
 import com.example.socialgate.model.TimeControlRepository
 import com.example.socialgate.view.activity.ScheduleActivity
 import com.example.socialgate.view.view_interfaces.ScheduleView
-import androidx.core.content.edit
 
 class ScheduleController(
     private val view: ScheduleView,

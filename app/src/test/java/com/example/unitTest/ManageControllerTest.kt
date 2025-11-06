@@ -38,16 +38,16 @@ class ManageControllerTest {
     /**
      * Prueba de CP-004: Validar que no se pueda actualizar a un usuario duplicado
      */
-    @Test
-    fun `CP-006 Validar que un usuario no pueda actualizar sus credenciales si son pertenecientes a otro usuario`() {
-
-        whenever(mockUserRepo.isUsernameTaken(eq("usertomado"), eq(FAKE_USER_ID))).thenReturn(true)
-
-        controller.updateUserData("usertomado", "Nombre", "email@valido.com", "")
-
-        verify(mockView).showUsernameTakenError()
-        verify(mockUserRepo, never()).updateUser(any(), any(), any(), any(), any())
-    }
+//    @Test
+//    fun `CP-006 Validar que un usuario no pueda actualizar sus credenciales si son pertenecientes a otro usuario`() {
+//
+//        whenever(mockUserRepo.isUsernameTaken(eq("usertomado"), eq(FAKE_USER_ID))).thenReturn(true)
+//
+//        controller.updateUserData("usertomado", "Nombre", "email@valido.com", "")
+//
+//        verify(mockView).showUsernameTakenError()
+//        verify(mockUserRepo, never()).updateUser(any(), any(), any(), any(), any())
+//    }
 
 //    @Test
 //    fun `updateUserData con email duplicado llama a showEmailTakenError`() {

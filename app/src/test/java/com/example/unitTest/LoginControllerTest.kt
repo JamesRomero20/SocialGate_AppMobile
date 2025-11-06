@@ -1,3 +1,4 @@
+
 package com.example.unitTest
 
 import android.content.Context
@@ -87,7 +88,7 @@ class LoginControllerTest {
      * Prueba de CP-010 (Usuario regular)
      */
     @Test
-    fun `CP-010 Validar que prototipo no notifique y redirija usuario sobre acciones configurables pertinentes`() {
+    fun `CP-009 Validar que prototipo no notifique y redirija usuario sobre acciones configurables pertinentes`() {
 
         val fakeUser = User(id = 1, username = "test", name = "Test User", email = "test@test.com")
         whenever(mockRepository.findUserByCredentials("test", "pass123")).thenReturn(fakeUser)
@@ -106,7 +107,7 @@ class LoginControllerTest {
      * Prueba de CP-009: Login de primera vez
      */
     @Test
-    fun `CP-009 Validar que prototipo notifique y redirija al usuario sobre acciones configurables pertinentes`() {
+    fun `CP-008 Validar que prototipo notifique y redirija al usuario sobre acciones configurables pertinentes`() {
 
         val fakeUser = User(id = 1, username = "test", name = "Test User", email = "test@test.com")
         whenever(mockRepository.findUserByCredentials("test", "pass123")).thenReturn(fakeUser)

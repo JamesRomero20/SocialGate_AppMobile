@@ -49,7 +49,7 @@ class ScheduleControllerTest {
      * Prueba de CP-007: Habilitar límite de tiempo
      */
     @Test
-    fun `CP-007 Validar que el usuario pueda establecer límites de tiempo a las redes sociales Facebook e Instagram`() {
+    fun `CP-006 Validar que el usuario pueda establecer límites de tiempo a las redes sociales Facebook e Instagram`() {
 
         whenever(mockPrefs.getFloat(eq(ScheduleActivity.KEY_SAVED_LIMIT), any())).thenReturn(2.5f)
 
@@ -65,7 +65,7 @@ class ScheduleControllerTest {
      * Prueba de CP-008: Deshabilitar límite de tiempo
      */
     @Test
-    fun `CP-008 Validar que el usuario no pueda establecer límites de tiempo a las redes sociales Facebook e Instagram`() {
+    fun `CP-007 Validar que el usuario no pueda establecer límites de tiempo a las redes sociales Facebook e Instagram`() {
 
         controller.onTimeLimitSwitchChanged(false, 3.0f)
 
@@ -79,7 +79,7 @@ class ScheduleControllerTest {
      * Prueba de CP-013: Habilitar horario académico
      */
     @Test
-    fun `CP-013 Validar que el usuario pueda establecer un horario académico a las redes sociales Facebook e Instagram`() {
+    fun `CP-012 Validar que el usuario pueda establecer un horario académico a las redes sociales Facebook e Instagram`() {
 
         controller.onAcademicScheduleSwitchChanged(true)
 
@@ -92,7 +92,7 @@ class ScheduleControllerTest {
      * Prueba de CP-014: Deshabilitar horario académico
      */
     @Test
-    fun `CP-014 Validar que el usuario pueda establecer un horario académico a las redes sociales Facebook e Instagram`() {
+    fun `CP-013 Validar que el usuario pueda establecer un horario académico a las redes sociales Facebook e Instagram`() {
         controller.onAcademicScheduleSwitchChanged(false)
 
         verify(mockScheduleRepo).updateScheduleStatus(FAKE_USER_ID, false)

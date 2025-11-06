@@ -1,6 +1,5 @@
 package com.example.socialgate.controller
 
-import android.util.Patterns
 import com.example.socialgate.model.TimeControlRepository
 import com.example.socialgate.model.UserExistsResult
 import com.example.socialgate.model.UserRepository
