@@ -63,6 +63,8 @@ class ManageController(
     }
 
     fun logout() {
+        val prefs = context.getSharedPreferences(LoginController.PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().remove(LoginController.KEY_LOGGED_IN_USER_ID).apply()
         context.stopService(Intent(context, AppUsageMonitorService::class.java))
         scheduleRepository.deleteSchedulesForUser(userId)
         view.navigateToLogin()

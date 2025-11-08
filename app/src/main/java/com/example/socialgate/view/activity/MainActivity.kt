@@ -22,7 +22,7 @@ class MainActivity : AppCompatActivity(), LoginView {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
         dbHelper = SocialDatabaseHelper(this)
-        controller = LoginController(this, dbHelper)
+        controller = LoginController(this, dbHelper, applicationContext)
         userInputEditText = findViewById(R.id.editTextPersonName)
         passwordEditText = findViewById(R.id.editTextPasswordName)
         val loginButton = findViewById<Button>(R.id.btnIngresar)
@@ -62,5 +62,9 @@ class MainActivity : AppCompatActivity(), LoginView {
     override fun onResume() {
         super.onResume()
         findViewById<View>(R.id.main).requestFocus()
+    }
+
+    override fun navigateToPermissions(userName: String, userId: Int) {
+        onLoginSuccess(userName, userId)
     }
 }

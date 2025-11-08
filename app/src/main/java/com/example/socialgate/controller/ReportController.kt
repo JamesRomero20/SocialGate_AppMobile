@@ -48,6 +48,17 @@ class ReportController(
     fun onGeneratePdfClicked() {
         if (currentData != null && currentData!!.totalUsageSeconds > 0) {
             view.generatePdf(currentData!!)
+
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val contenidoResumen = "Reporte de uso para ${currentData!!.userName}. " +
+                            "Tiempo total: ${currentData!!.totalUsageSeconds} segundos."
+                    repository.saveReport(userId, "PDF", contenidoResumen)
+                } catch (e: Exception) {
+
+                }
+            }
+
         } else {
             view.showNoDataToGenerateReportError()
         }

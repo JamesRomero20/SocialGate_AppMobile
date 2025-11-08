@@ -1,7 +1,6 @@
 package com.example.socialgate.view.activity
 
 import android.Manifest
-import android.app.Activity
 import android.app.AppOpsManager
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -33,15 +32,22 @@ class HomeActivity : AppCompatActivity(), HomeView {
     private lateinit var tvFacebookTime: TextView
     private lateinit var tvInstagramTime: TextView
 
+    private var hasRequestedOptionalPermissions = false
+
     private val requestMultiplePermissionsLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            val allGranted = permissions.entries.all { it.value }
-            if (allGranted) {
-                Toast.makeText(this, "Todos los permisos necesarios han sido concedidos.", Toast.LENGTH_SHORT).show()
-                startMonitoringService()
+            val notificationsGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                permissions[Manifest.permission.POST_NOTIFICATIONS] ?: false
             } else {
-                Toast.makeText(this, "Algunos permisos son necesarios para el funcionamiento completo de la app.", Toast.LENGTH_LONG).show()
+                true
             }
+
+            if (notificationsGranted) {
+                Toast.makeText(this, "Permiso de notificaciones concedido.", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this, "Puedes activar las notificaciones desde Ajustes si cambias de opinión.", Toast.LENGTH_LONG).show()
+            }
+
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -117,25 +123,25 @@ class HomeActivity : AppCompatActivity(), HomeView {
             return
         }
 
-        val requiredPermissions = mutableListOf<String>()
+        startMonitoringService()
+
+        val optionalPermissions = mutableListOf<String>()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requiredPermissions.add(Manifest.permission.POST_NOTIFICATIONS)
+            optionalPermissions.add(Manifest.permission.POST_NOTIFICATIONS)
         }
 
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-            requiredPermissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            optionalPermissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         }
 
-        val missingPermissions = requiredPermissions.filter {
+        val missingPermissions = optionalPermissions.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
 
-        if (missingPermissions.isNotEmpty()) {
+        if (missingPermissions.isNotEmpty() && !hasRequestedOptionalPermissions) {
+            hasRequestedOptionalPermissions = true
             requestMultiplePermissionsLauncher.launch(missingPermissions.toTypedArray())
-        } else {
-
-            startMonitoringService()
         }
     }
 
@@ -165,7 +171,7 @@ class HomeActivity : AppCompatActivity(), HomeView {
             }
             if (intent != null && item.itemId != bottomNav.selectedItemId) {
                 startActivity(intent)
-                overrideActivityTransition(Activity.OVERRIDE_TRANSITION_OPEN, 0, 0)
+                overridePendingTransition(0, 0)
             }
             true
         }

@@ -182,12 +182,23 @@ class AppUsageMonitorService : Service() {
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }
 
+        val intent = Intent(this, HomeActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("USER_ID", userId)
+        }
+
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(
+            this, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.logosocial)
             .setContentTitle("Acceso Denegado")
             .setContentText("No puedes usar redes sociales durante tu horario académico.")
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
             .build()
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
