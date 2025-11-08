@@ -13,12 +13,13 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        android:fillViewport="true">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingBottom="32dp">
+            android:paddingBottom="20dp">
 
             <ImageButton
                 android:id="@+id/btnBackToLogin"
@@ -29,7 +30,6 @@
                 android:src="@drawable/ic_arrow_back"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Regresar al login"
-                android:padding="24dp"
                 app:tint="@android:color/white"
                 android:elevation="4dp"
                 app:layout_constraintStart_toStartOf="parent"
@@ -37,15 +37,16 @@
 
             <ImageView
                 android:id="@+id/imageView3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
                 android:adjustViewBounds="true"
                 android:scaleType="fitXY"
-                app:srcCompat="@drawable/top_background1"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintDimensionRatio="16:9"
                 app:layout_constraintEnd_toEndOf="parent"
-                />
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/top_background1" />
 
             <TextView
                 android:id="@+id/textView2"
@@ -186,15 +187,13 @@
 
             <Button
                 android:id="@+id/button2"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:layout_marginBottom="32dp"
                 android:text="Crear cuenta"
                 android:backgroundTint="#1877F2"
-                android:paddingHorizontal="48dp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="@id/layoutPassword"
+                app:layout_constraintEnd_toEndOf="@id/layoutPassword"
                 app:layout_constraintTop_toBottomOf="@id/layoutPassword"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>

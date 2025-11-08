@@ -4,29 +4,33 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
     android:background="#F5F5F5"
+    android:id="@+id/focus"
     tools:context=".view.activity.ManageActivity">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/header_layout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@color/header_blue"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
         android:paddingTop="32dp"
         android:paddingBottom="32dp"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:id="@+id/imageView6"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            app:srcCompat="@drawable/logosocial" />
+            android:layout_width="0dp"
+            app:layout_constraintWidth_percent="0.25"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/logosocial"
+            android:adjustViewBounds="true"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
 
         <TextView
             android:id="@+id/textView3"
@@ -37,7 +41,10 @@
             android:textAlignment="center"
             android:textColor="@android:color/white"
             android:textSize="34sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/imageView6"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
 
         <TextView
             android:id="@+id/textView4"
@@ -46,12 +53,17 @@
             android:text="Control de acceso a redes sociales"
             android:textAlignment="center"
             android:textColor="@android:color/white"
-            android:textSize="20sp" />
-    </LinearLayout>
+            android:textSize="20sp"
+            app:layout_constraintTop_toBottomOf="@id/textView3"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:fillViewport="true"
         app:layout_constraintTop_toBottomOf="@id/header_layout"
         app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
         app:layout_constraintStart_toStartOf="parent"
@@ -144,9 +156,8 @@
                     </com.google.android.material.textfield.TextInputLayout>
                     <Button
                         android:id="@+id/btnGuardarDatos"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
                         android:layout_marginTop="16dp"
                         android:backgroundTint="@color/button_color_selector"
                         android:textColor="#ffffffff"

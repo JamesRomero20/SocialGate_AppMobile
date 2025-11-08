@@ -59,9 +59,9 @@ class ManageActivity : AppCompatActivity(), ManageView {
 
     override fun onResume() {
         super.onResume()
+        findViewById<View>(R.id.focus).requestFocus()
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNav.selectedItemId = R.id.nav_gestionar
-        findViewById<View>(R.id.header_layout).requestFocus()
     }
 
     override fun displayUserData(user: User) {
