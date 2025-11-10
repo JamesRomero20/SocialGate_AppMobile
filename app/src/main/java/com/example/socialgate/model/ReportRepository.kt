@@ -83,19 +83,4 @@ class ReportRepository(private val dbHelper: SocialDatabaseHelper) {
             dailyUsage
         )
     }
-    fun saveReport(userId: Int, tipoReporte: String, contenido: String): Long {
-        val db = dbHelper.writableDatabase
-
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        val currentDate = sdf.format(Date())
-
-        val values = ContentValues().apply {
-            put(SocialDatabaseHelper.KEY_ID_USUARIO_FK, userId)
-            put(SocialDatabaseHelper.KEY_TIPO_REPORTE, tipoReporte)
-            put(SocialDatabaseHelper.KEY_CONTENIDO, contenido)
-            put(SocialDatabaseHelper.KEY_FECHA_GENERACION, currentDate)
-        }
-
-        return db.insert(SocialDatabaseHelper.TABLE_REPORTE, null, values)
-    }
 }

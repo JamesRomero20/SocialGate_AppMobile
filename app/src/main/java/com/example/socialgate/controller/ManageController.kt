@@ -5,6 +5,8 @@ import android.content.Intent
 import android.util.Patterns
 import com.example.socialgate.model.ScheduleRepository
 import com.example.socialgate.model.SocialDatabaseHelper
+import com.example.socialgate.model.TimeControlRepository
+import com.example.socialgate.view.activity.ScheduleActivity
 import com.example.socialgate.model.UserRepository
 import com.example.socialgate.service.AppUsageMonitorService
 import com.example.socialgate.view.view_interfaces.ManageView
@@ -17,6 +19,8 @@ class ManageController(
 ) {
     private val userRepository = UserRepository(dbHelper)
     private val scheduleRepository = ScheduleRepository(dbHelper)
+
+    private val timeControlRepository = TimeControlRepository(dbHelper)
 
     fun loadInitialData() {
         val user = userRepository.findUserById(userId)
@@ -63,8 +67,11 @@ class ManageController(
     }
 
     fun logout() {
-        val prefs = context.getSharedPreferences(LoginController.PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().remove(LoginController.KEY_LOGGED_IN_USER_ID).apply()
+        val schedulePrefs = context.getSharedPreferences(ScheduleActivity.PREFS_NAME, Context.MODE_PRIVATE)
+        schedulePrefs.edit().putFloat(ScheduleActivity.KEY_SAVED_LIMIT, 0f).apply()
+        timeControlRepository.saveTimeLimit(userId, 0)
+        val loginPrefs = context.getSharedPreferences(LoginController.PREFS_NAME, Context.MODE_PRIVATE)
+        loginPrefs.edit().remove(LoginController.KEY_LOGGED_IN_USER_ID).apply()
         context.stopService(Intent(context, AppUsageMonitorService::class.java))
         scheduleRepository.deleteSchedulesForUser(userId)
         view.navigateToLogin()

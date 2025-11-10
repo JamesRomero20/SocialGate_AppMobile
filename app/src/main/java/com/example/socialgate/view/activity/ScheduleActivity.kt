@@ -65,8 +65,16 @@ class ScheduleActivity : AppCompatActivity(), ScheduleView {
     override fun displayTimeLimit(limitInHours: Float, isEnabled: Boolean) {
         switchLimiteTiempo.isChecked = isEnabled
         sliderTiempo.isEnabled = isEnabled
-        sliderTiempo.value = (Math.round(limitInHours * 100) / 100.0f)
-        if (!isEnabled) {
+        val roundedLimit = (Math.round(limitInHours * 100) / 100.0f)
+        val safeLimit = roundedLimit.coerceAtMost(3.0f)
+        if (isEnabled) {
+            sliderTiempo.value = safeLimit
+            val horas = safeLimit.toInt()
+            val fraccionMinutos = safeLimit - horas
+            val minutos = Math.round(fraccionMinutos * 60)
+            tvTiempoSeleccionado.text = "${horas} horas ${minutos} minutos"
+        } else {
+            sliderTiempo.value = 0f
             tvTiempoSeleccionado.text = "Sin límite"
         }
     }

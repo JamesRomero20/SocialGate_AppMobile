@@ -7,14 +7,13 @@ import android.database.sqlite.SQLiteOpenHelper
 class SocialDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
-        private const val DATABASE_VERSION = 2
+        private const val DATABASE_VERSION = 3
         private const val DATABASE_NAME = "SocialMediaControl.db"
         const val TABLE_USUARIO = "usuario"
         const val TABLE_ACTIVIDAD = "actividad"
         const val TABLE_HORARIO_BLOQUEO = "horario_bloqueo"
         const val KEY_ID_HORARIO = "id_horario_pk"
         const val TABLE_CONTROL_TIEMPO = "control_tiempo"
-        const val TABLE_REPORTE = "reporte"
         const val KEY_DIA_SEMANA = "dia_semana"
         const val KEY_HORA_INICIO = "hora_inicio"
         const val KEY_HORA_FIN = "hora_fin"
@@ -24,7 +23,7 @@ class SocialDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
         const val KEY_NOMBRE = "nombre"
         const val KEY_USUARIO = "usuario"
         const val KEY_CLAVE = "clave"
-        const val KEY_TIPO_USUARIO = "tipo_usuario"
+        const val KEY_ROL = "rol"
         const val KEY_EMAIL = "email"
         const val KEY_FECHA_REGISTRO = "fecha_registro"
         const val KEY_ID_ACTIVIDAD = "id_actividad_pk"
@@ -37,10 +36,6 @@ class SocialDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
         const val KEY_TIEMPO_LIMITE = "tiempo_limite"
         const val KEY_TIEMPO_USADO = "tiempo_usado"
         const val KEY_ESTADO_ALERTA = "estado_alerta"
-        const val KEY_ID_REPORTE = "id_reporte_pk"
-        const val KEY_FECHA_GENERACION = "fecha_generacion"
-        const val KEY_TIPO_REPORTE = "tipo_reporte"
-        const val KEY_CONTENIDO = "contenido"
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
@@ -50,7 +45,7 @@ class SocialDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
                 + KEY_NOMBRE + " TEXT,"
                 + KEY_USUARIO + " TEXT UNIQUE,"
                 + KEY_CLAVE + " TEXT,"
-                + KEY_TIPO_USUARIO + " TEXT,"
+                + KEY_ROL + " TEXT,"
                 + KEY_EMAIL + " TEXT UNIQUE,"
                 + KEY_FECHA_REGISTRO + " TEXT" + ")")
         db?.execSQL(createUsuarioTable)
@@ -75,16 +70,6 @@ class SocialDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
                 + "FOREIGN KEY(" + KEY_ID_USUARIO_FK + ") REFERENCES " + TABLE_USUARIO + "(" + KEY_ID_USUARIO + ")" + ")")
         db?.execSQL(createControlTiempoTable)
 
-        val createReporteTable = ("CREATE TABLE " + TABLE_REPORTE + "("
-                + KEY_ID_REPORTE + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                + KEY_ID_USUARIO_FK + " INTEGER,"
-                + KEY_FECHA_GENERACION + " TEXT,"
-                + KEY_TIPO_REPORTE + " TEXT,"
-                + KEY_CONTENIDO + " TEXT,"
-                + "FOREIGN KEY(" + KEY_ID_USUARIO_FK + ") REFERENCES " + TABLE_USUARIO + "(" + KEY_ID_USUARIO + ")" + ")")
-        db?.execSQL(createReporteTable)
-
-
         val createHorarioBloqueoTable = ("CREATE TABLE " + TABLE_HORARIO_BLOQUEO + "("
                 + KEY_ID_HORARIO + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + KEY_ID_USUARIO_FK + " INTEGER,"
@@ -97,8 +82,6 @@ class SocialDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
-
-        db?.execSQL("DROP TABLE IF EXISTS " + TABLE_REPORTE)
         db?.execSQL("DROP TABLE IF EXISTS " + TABLE_CONTROL_TIEMPO)
         db?.execSQL("DROP TABLE IF EXISTS " + TABLE_ACTIVIDAD)
         db?.execSQL("DROP TABLE IF EXISTS " + TABLE_HORARIO_BLOQUEO)

@@ -90,4 +90,16 @@ class ScheduleRepository(private val dbHelper: SocialDatabaseHelper) {
             android.util.Log.e("ScheduleRepo", "Error al borrar horarios para el usuario $userId", e)
         }
     }
+
+    fun isScheduleFeatureActive(userId: Int): Boolean {
+        val db = dbHelper.readableDatabase
+        val query = "SELECT 1 FROM ${SocialDatabaseHelper.TABLE_HORARIO_BLOQUEO} WHERE " +
+                "${SocialDatabaseHelper.KEY_ID_USUARIO_FK} = ? AND " +
+                "${SocialDatabaseHelper.KEY_HORARIO_ACTIVO} = 1 LIMIT 1"
+        val cursor = db.rawQuery(query, arrayOf(userId.toString()))
+        val isActive = cursor.moveToFirst()
+        cursor.close()
+        return isActive
+    }
+
 }

@@ -118,7 +118,7 @@ class UserRepository(private val dbHelper: SocialDatabaseHelper) {
             put(SocialDatabaseHelper.KEY_NOMBRE, fullName)
             put(SocialDatabaseHelper.KEY_EMAIL, email)
             put(SocialDatabaseHelper.KEY_CLAVE, password)
-            put(SocialDatabaseHelper.KEY_TIPO_USUARIO, "Usuario")
+            put(SocialDatabaseHelper.KEY_ROL, "Estudiante")
             put(SocialDatabaseHelper.KEY_FECHA_REGISTRO, registrationDate)
         }
         return db.insert(SocialDatabaseHelper.TABLE_USUARIO, null, values)

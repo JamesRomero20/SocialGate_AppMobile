@@ -37,15 +37,16 @@ class ScheduleController(
     }
 
     fun onTimeLimitSwitchChanged(isEnabled: Boolean, currentSliderValue: Float) {
+        val prefs = context.getSharedPreferences(ScheduleActivity.PREFS_NAME, Context.MODE_PRIVATE)
         if (isEnabled) {
-            val prefs = context.getSharedPreferences(ScheduleActivity.PREFS_NAME, Context.MODE_PRIVATE)
             val savedLimitHours = prefs.getFloat(ScheduleActivity.KEY_SAVED_LIMIT, 0f)
             timeControlRepository.saveTimeLimit(userId, (savedLimitHours * 60).toInt())
             view.displayTimeLimit(savedLimitHours, true)
             view.showToast("Límite de tiempo activado")
         } else {
             timeControlRepository.saveTimeLimit(userId, 0)
-            view.displayTimeLimit(currentSliderValue, false)
+            prefs.edit().putFloat(ScheduleActivity.KEY_SAVED_LIMIT, 0f).apply()
+            view.displayTimeLimit(0f, false)
             view.showToast("Límite de tiempo desactivado")
         }
     }
