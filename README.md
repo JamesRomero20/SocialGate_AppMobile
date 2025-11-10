@@ -86,7 +86,7 @@ Este proyecto se distribuye bajo la licencia MIT. Consulta el archivo `LICENSE` 
 
 **Recomendado**
 
-  * **Memoeria RAM:** 8GB o más
+  * **Memoria RAM:** 8GB o más
   * **Versión de Android:** Android 10 (Q) (API 29) o más
   * **CPU:** Helio G99, similar o superior
   * **Almacenamiento:** 100 MB de espacio libre
