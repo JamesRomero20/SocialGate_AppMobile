@@ -126,7 +126,13 @@ class ScheduleActivity : AppCompatActivity(), ScheduleView {
     }
 
     private fun setupListeners() {
-        btnEditarHorario.setOnClickListener { showEditScheduleDialog() }
+        btnEditarHorario.setOnClickListener {
+            if (controller.hasSelectedDays()) {
+                showEditScheduleDialog()
+            } else {
+                showToast("Por favor, seleccione al menos un día de la semana primero")
+            }
+        }
         sliderTiempo.addOnChangeListener { _, value, _ ->
             val horas = value.toInt()
             val minutos = ((value - horas) * 60).toInt()
@@ -212,17 +218,25 @@ class ScheduleActivity : AppCompatActivity(), ScheduleView {
             }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show()
         }
 
-        AlertDialog.Builder(this)
+        val builder = AlertDialog.Builder(this)
             .setTitle("Configurar Horario de Bloqueo")
             .setView(dialogView)
-            .setPositiveButton("Guardar") { _, _ ->
-                if (startTime.isNotEmpty() && endTime.isNotEmpty()) {
-                    controller.saveNewSchedule(startTime, endTime)
-                } else {
-                    Toast.makeText(this, "Por favor, seleccione una hora de inicio y fin", Toast.LENGTH_SHORT).show()
-                }
-            }
+            .setPositiveButton("Guardar", null)
             .setNegativeButton("Cancelar", null)
-            .show()
+
+        val dialog = builder.create()
+        dialog.show()
+        val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+        positiveButton.setOnClickListener {
+            if (startTime.isEmpty() || endTime.isEmpty()) {
+                Toast.makeText(this, "Por favor, seleccione la hora desde y la hora hasta", Toast.LENGTH_SHORT).show()
+            } else if (startTime >= endTime) {
+                Toast.makeText(this, "La hora desde debe ser anterior a la hora hasta", Toast.LENGTH_SHORT).show()
+
+            } else {
+                controller.saveNewSchedule(startTime, endTime)
+                dialog.dismiss()
+            }
+        }
     }
 }

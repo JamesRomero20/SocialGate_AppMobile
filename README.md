@@ -82,10 +82,9 @@ Este proyecto se distribuye bajo la licencia MIT. Consulta el archivo `LICENSE` 
 
 -----
 
-## 📫 Requisitos de hardware para SocialGate
+## 📫 Requisitos para SocialGate
 
 **Recomendado**
-
   * **Memoria RAM:** 8GB o más
   * **Versión de Android:** Android 10 (Q) (API 29) o más
   * **CPU:** Helio G99, similar o superior

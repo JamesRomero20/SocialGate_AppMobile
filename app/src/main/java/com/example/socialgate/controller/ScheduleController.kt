@@ -17,6 +17,10 @@ class ScheduleController(
     private val timeControlRepository = TimeControlRepository(dbHelper)
     private val scheduleRepository = ScheduleRepository(dbHelper)
     private val selectedDays = mutableSetOf<String>()
+    fun hasSelectedDays(): Boolean {
+        return selectedDays.isNotEmpty()
+    }
+
     fun loadInitialData() {
         val limitInMinutes = timeControlRepository.getTimeLimit(userId)
         val isEnabled = limitInMinutes > 0
@@ -81,10 +85,6 @@ class ScheduleController(
     }
 
     fun saveNewSchedule(startTime: String, endTime: String) {
-        if (selectedDays.isEmpty()) {
-            view.showToast("Por favor, seleccione al menos un día")
-            return
-        }
         scheduleRepository.saveSchedule(userId, startTime, endTime, selectedDays)
         view.showToast("Horario guardado correctamente")
         loadInitialData()
