@@ -34,7 +34,7 @@ class RegisterControllerTest {
      * Prueba del Caso de Prueba CP-003: Registro Exitoso
      */
     @Test
-    fun `CP-003 Validar que un usuario pueda registrarse en el prototipo`() {
+    fun `PU - Validar que un usuario pueda registrarse en el prototipo`() {
 
         whenever(mockUserRepo.checkUserExists(any(), any())).thenReturn(UserExistsResult.NONE)
 
@@ -55,7 +55,7 @@ class RegisterControllerTest {
      * Prueba del Caso de Prueba CP-004: Usuario Duplicado
      */
     @Test
-    fun `CP-004 Validar que un usuario no pueda registrarse en el prototipo al ingresar credenciales pertenecientes a otro usuario`() {
+    fun `PU - Validar que un usuario no pueda registrarse en el prototipo al ingresar credenciales pertenecientes a otro usuario`() {
         whenever(mockUserRepo.checkUserExists(any(), any())).thenReturn(UserExistsResult.USERNAME_TAKEN)
 
         controller.registerUser(validUser, validName, validSubname, validEmail, validPass, validPass)
@@ -65,29 +65,29 @@ class RegisterControllerTest {
         verify(mockView, never()).onRegistrationSuccess()
     }
 
-//    @Test
-//    fun `registro con email duplicado llama a showUserExistsError`() {
-//        whenever(mockUserRepo.checkUserExists(any(), any())).thenReturn(UserExistsResult.EMAIL_TAKEN)
-//
-//        controller.registerUser(validUser, validName, validSubname, validEmail, validPass, validPass)
-//
-//        verify(mockView).showUserExistsError("El correo electrónico ya está registrado.")
-//        verify(mockUserRepo, never()).createUser(any(), any(), any(), any(), any())
-//    }
+    @Test
+    fun `PU - registro con email duplicado llama a showUserExistsError`() {
+        whenever(mockUserRepo.checkUserExists(any(), any())).thenReturn(UserExistsResult.EMAIL_TAKEN)
 
-//    @Test
-//    fun `registro con campos vacíos llama a showValidationError`() {
-//        controller.registerUser("", "Test", "User", "email", "pass", "pass")
-//
-//        verify(mockView).showValidationError("Por favor, complete todos los campos")
-//        verify(mockUserRepo, never()).checkUserExists(any(), any())
-//    }
+        controller.registerUser(validUser, validName, validSubname, validEmail, validPass, validPass)
 
-//    @Test
-//    fun `registro con contraseñas que no coinciden llama a passwordsDoNotMatchError`() {
-//        controller.registerUser(validUser, validName, validSubname, validEmail, "pass1", "pass2")
-//
-//        verify(mockView).passwordsDoNotMatchError()
-//        verify(mockUserRepo, never()).checkUserExists(any(), any())
-//    }
+        verify(mockView).showUserExistsError("El correo electrónico ya está registrado.")
+        verify(mockUserRepo, never()).createUser(any(), any(), any(), any(), any())
+    }
+
+    @Test
+    fun `PU - registro con campos vacíos llama a showValidationError`() {
+        controller.registerUser("", "Test", "User", "email", "pass", "pass")
+
+        verify(mockView).showValidationError("Por favor, complete todos los campos")
+        verify(mockUserRepo, never()).checkUserExists(any(), any())
+    }
+
+    @Test
+    fun `PU - registro con contraseñas que no coinciden llama a passwordsDoNotMatchError`() {
+        controller.registerUser(validUser, validName, validSubname, validEmail, "pass1", "pass2")
+
+        verify(mockView).passwordsDoNotMatchError()
+        verify(mockUserRepo, never()).checkUserExists(any(), any())
+    }
 }

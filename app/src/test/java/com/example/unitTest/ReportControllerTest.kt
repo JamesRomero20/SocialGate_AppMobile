@@ -34,7 +34,7 @@ class ReportControllerTest {
     }
 
     @Test
-    fun `CP-005 Validar que el prototipo registre el tiempo de uso de las redes sociales Facebook e Instagram`() = runTest {
+    fun `PU - Validar que el prototipo registre el tiempo de uso de las redes sociales Facebook e Instagram`() = runTest {
         val fakeData = ReportData(
             userName = "Test User", userEmail = "test@user.com", totalUsageSeconds = 300,
             totalDaysWithActivity = 5, facebookUsageSeconds = 120, instagramUsageSeconds = 180,
@@ -49,7 +49,7 @@ class ReportControllerTest {
     }
 
     @Test
-    fun `CP-010 Validar que prototipo permita genera reportes sobre el monitoreo y tiempo de uso`() = runTest {
+    fun `PU - Validar que prototipo permita genera reportes sobre el monitoreo y tiempo de uso`() = runTest {
         val fakeData = ReportData(
             userName = "Test User", userEmail = "test@user.com", totalUsageSeconds = 300,
             totalDaysWithActivity = 5, facebookUsageSeconds = 120, instagramUsageSeconds = 180,
@@ -66,7 +66,7 @@ class ReportControllerTest {
     }
 
     @Test
-    fun `CP-011 Validar que prototipo no permita genera reportes sobre el monitoreo y tiempo de uso`() = runTest {
+    fun `PU - Validar que prototipo no permita genera reportes sobre el monitoreo y tiempo de uso`() = runTest {
         val emptyData = ReportData(
             userName = "Test User", userEmail = "test@user.com", totalUsageSeconds = 0,
             totalDaysWithActivity = 0, facebookUsageSeconds = 0, instagramUsageSeconds = 0,

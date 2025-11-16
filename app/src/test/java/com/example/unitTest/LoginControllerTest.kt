@@ -21,10 +21,6 @@ class LoginControllerTest {
 
     private lateinit var controller: LoginController
 
-    /**
-     * Caso de prueba
-     */
-
     @Before
     fun setup() {
 
@@ -45,7 +41,7 @@ class LoginControllerTest {
      * Prueba del Caso de Prueba CP-002: Login Fallido
      */
     @Test
-    fun `CP-002 Validar que un usuario con credenciales incorrectas no pueda iniciar sesión`() {
+    fun `PU - Validar que un usuario con credenciales incorrectas no pueda iniciar sesión`() {
         whenever(mockRepository.findUserByCredentials("test", "wrongpass")).thenReturn(null)
 
         controller.login("test", "wrongpass")
@@ -55,27 +51,27 @@ class LoginControllerTest {
         verify(mockView, never()).navigateToPermissions(any())
     }
 
-//    @Test
-//    fun `login con campos vacíos llama a showValidationError`() {
-//        controller.login("", "")
-//
-//        verify(mockView).showValidationError("Por favor, ingrese sus credenciales")
-//        verify(mockRepository, never()).findUserByCredentials(any(), any())
-//    }
+    @Test
+    fun `PU - login con campos vacíos llama a showValidationError`() {
+        controller.login("", "")
 
-    /*@Test
-    fun `login con contraseña corta llama a showValidationError`() {
+        verify(mockView).showValidationError("Por favor, ingrese sus credenciales")
+        verify(mockRepository, never()).findUserByCredentials(any(), any())
+    }
+
+    @Test
+    fun `PU - login con contraseña corta llama a showValidationError`() {
         controller.login("test", "123")
 
         verify(mockView).showValidationError("La contraseña debe tener entre 6 y 20 caracteres.")
         verify(mockRepository, never()).findUserByCredentials(any(), any())
-    }*/
+    }
 
     /**
      * Prueba de CP-001
      */
     @Test
-    fun `CP-001  Validar que un usuario con credenciales correctas pueda iniciar sesión`() {
+    fun `PU - Validar que un usuario con credenciales correctas pueda iniciar sesión`() {
 
         val fakeUser = User(id = 1, username = "test", name = "Test User", email = "test@test.com")
         whenever(mockRepository.findUserByCredentials("test", "pass123")).thenReturn(fakeUser)
@@ -92,7 +88,7 @@ class LoginControllerTest {
      * Prueba de CP-010 (Usuario regular)
      */
     @Test
-    fun `CP-009 Validar que prototipo no notifique y redirija usuario sobre acciones configurables pertinentes`() {
+    fun `PU - Validar que prototipo no notifique y redirija usuario sobre acciones configurables pertinentes`() {
 
         val fakeUser = User(id = 1, username = "test", name = "Test User", email = "test@test.com")
         whenever(mockRepository.findUserByCredentials("test", "pass123")).thenReturn(fakeUser)
@@ -111,7 +107,7 @@ class LoginControllerTest {
      * Prueba de CP-009: Login de primera vez
      */
     @Test
-    fun `CP-008 Validar que prototipo notifique y redirija al usuario sobre acciones configurables pertinentes`() {
+    fun `PU - Validar que prototipo notifique y redirija al usuario sobre acciones configurables pertinentes`() {
 
         val fakeUser = User(id = 1, username = "test", name = "Test User", email = "test@test.com")
         whenever(mockRepository.findUserByCredentials("test", "pass123")).thenReturn(fakeUser)

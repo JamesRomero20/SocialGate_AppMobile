@@ -49,7 +49,7 @@ class ScheduleControllerTest {
      * Prueba de CP-007: Habilitar límite de tiempo
      */
     @Test
-    fun `CP-006 Validar que el usuario pueda establecer límites de tiempo a las redes sociales Facebook e Instagram`() {
+    fun `PU - Validar que el usuario pueda establecer límites de tiempo a las redes sociales Facebook e Instagram`() {
 
         whenever(mockPrefs.getFloat(eq(ScheduleActivity.KEY_SAVED_LIMIT), any())).thenReturn(2.5f)
 
@@ -65,7 +65,7 @@ class ScheduleControllerTest {
      * Prueba de CP-008: Deshabilitar límite de tiempo
      */
     @Test
-    fun `CP-007 Validar que el usuario no pueda establecer límites de tiempo a las redes sociales Facebook e Instagram`() {
+    fun `PU - Validar que el usuario no pueda establecer límites de tiempo a las redes sociales Facebook e Instagram`() {
 
         controller.onTimeLimitSwitchChanged(false, 3.0f)
 
@@ -79,7 +79,7 @@ class ScheduleControllerTest {
      * Prueba de CP-013: Habilitar horario académico
      */
     @Test
-    fun `CP-012 Validar que el usuario pueda establecer un horario académico a las redes sociales Facebook e Instagram`() {
+    fun `PU -  Validar que el usuario pueda establecer un horario académico a las redes sociales Facebook e Instagram`() {
 
         controller.onAcademicScheduleSwitchChanged(true)
 
@@ -92,7 +92,7 @@ class ScheduleControllerTest {
      * Prueba de CP-014: Deshabilitar horario académico
      */
     @Test
-    fun `CP-013 Validar que el usuario pueda establecer un horario académico a las redes sociales Facebook e Instagram`() {
+    fun `PU - Validar que el usuario pueda establecer un horario académico a las redes sociales Facebook e Instagram`() {
         controller.onAcademicScheduleSwitchChanged(false)
 
         verify(mockScheduleRepo).updateScheduleStatus(FAKE_USER_ID, false)
@@ -100,20 +100,20 @@ class ScheduleControllerTest {
         verify(mockView).showToast("Horario académico desactivado")
     }
 
-//    @Test
-//    fun `onDayClicked gestiona la selección de días`() {
-//        val result1 = controller.onDayClicked("Lunes")
-//        val result2 = controller.onDayClicked("Lunes")
-//
-//        assert(result1 == true)
-//        assert(result2 == false)
-//    }
+    @Test
+    fun `PU - onDayClicked gestiona la selección de días`() {
+        val result1 = controller.onDayClicked("Lunes")
+        val result2 = controller.onDayClicked("Lunes")
 
-//    @Test
-//    fun `saveNewSchedule sin días seleccionados muestra error`() {
-//        controller.saveNewSchedule("08:00", "10:00")
-//
-//        verify(mockView).showToast("Por favor, seleccione al menos un día")
-//        verify(mockScheduleRepo, never()).saveSchedule(any(), any(), any(), any())
-//    }
+        assert(result1 == true)
+        assert(result2 == false)
+    }
+
+    @Test
+    fun `PU - saveNewSchedule sin días seleccionados muestra error`() {
+        controller.saveNewSchedule("08:00", "10:00")
+
+        verify(mockView).showToast("Por favor, seleccione al menos un día")
+        verify(mockScheduleRepo, never()).saveSchedule(any(), any(), any(), any())
+    }
 }
