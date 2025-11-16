@@ -71,7 +71,7 @@ Para ejecutar este prototipo en tu entorno local, sigue estos pasos:
 
 4.  **Ejecutar la Aplicación:**
 
-      * Conecta un dispositivo Android físico o utiliza un Emulador de Android (AVD).
+      * Conecta un teléfono Android físico o utiliza un Emulador de Android (AVD).
       * Presiona `Run` (Shift + F10) en Android Studio para compilar e instalar la aplicación.
 
 -----
@@ -82,8 +82,11 @@ Este proyecto se distribuye bajo la licencia MIT. Consulta el archivo `LICENSE` 
 
 -----
 
-## 📫 Contacto
+## 📫 Requisitos para SocialGate
 
-**JamesRomero20**
-
-  * [GitHub Profile](https://www.google.com/search?q=https://github.com/JamesRomero20)
+**Recomendado**
+  * **Memoria RAM:** 8GB o más
+  * **Versión de Android:** Android 10 (Q) (API 29) o más
+  * **CPU:** Helio G99, similar o superior
+  * **Almacenamiento:** 100 MB de espacio libre
+-----
